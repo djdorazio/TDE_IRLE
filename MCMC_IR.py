@@ -27,7 +27,8 @@ from emcee_Funcs_TDEs import *
 ### OPTIONS
 ################################
 ################################
-Fit = False
+Pplot = False
+Fit = True
 Fit_Src = False
 Fit_IR = True
 QvFit = False
@@ -514,97 +515,97 @@ if (Fit):
 
 
 
+If (Pplot):
+	### PLOT POINTS
+	print "PLOTTING"
+	Nt=40
+	tt = np.linspace(0.00, 12.,       Nt)*tfb
 
-### PLOT POINTS
-print "PLOTTING"
-Nt=40
-tt = np.linspace(0.00, 12.,       Nt)*tfb
+	if (Fit==False):
+		#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]
+		IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron]
+		V_p_opt = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 2.0, 100.7]
+	if (Fit_IR==False):
+		#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
+		IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron]
+	if (Fit_Src==False):
+		V_p_opt = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 1.8, 100.]
 
-if (Fit==False):
-	#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]
-	IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron]
-	V_p_opt = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 2.0, 100.7]
-if (Fit_IR==False):
-	#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
-	IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron]
-if (Fit_Src==False):
-	V_p_opt = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 1.8, 100.]
-
-FsrcI1 = np.zeros(Nt)
-FVplus = np.zeros(Nt)
-FI1 = np.zeros(Nt)
-FI2 = np.zeros(Nt)
-
-
-#FsrcI1 = -2.5*np.log10(Fsrc_Anl(tt, Dst, Lav, tfb)/FVbndRel)
-					   #Fsrc_Anl_Fit(t, r,      Lavg,       tfb,       t0,       gam,         FQfac)
-FsrcI1 = VLC_point(V_p_opt, tt, Varg)
-
-for i in range(Nt):
-	#FsrcI1[i] = -2.5*np.log10(Fsrc_Anl_Fit(tt[i], Dst, V_p_opt[0], V_p_opt[2], V_p_opt[1], V_p_opt[3], V_p_opt[4]))
-	FI1[i]    = min(IRLC_point(IR_p_opt, tt[i], argW1, RHS_table, T_table), 12.9)
-	FI2[i]    = min(IRLC_point(IR_p_opt, tt[i], argW2, RHS_table, T_table), 11.26)
-	FVplus[i] = IRLC_point(IR_p_opt, tt[i], argVplus, RHS_table, T_table)
+	FsrcI1 = np.zeros(Nt)
+	FVplus = np.zeros(Nt)
+	FI1 = np.zeros(Nt)
+	FI2 = np.zeros(Nt)
 
 
-FVtot = -2.5*np.log10(10.**(-FsrcI1/2.5) + 10.**(-FVplus/2.5))
+	#FsrcI1 = -2.5*np.log10(Fsrc_Anl(tt, Dst, Lav, tfb)/FVbndRel)
+						   #Fsrc_Anl_Fit(t, r,      Lavg,       tfb,       t0,       gam,         FQfac)
+	FsrcI1 = VLC_point(V_p_opt, tt, Varg)
+
+	for i in range(Nt):
+		#FsrcI1[i] = -2.5*np.log10(Fsrc_Anl_Fit(tt[i], Dst, V_p_opt[0], V_p_opt[2], V_p_opt[1], V_p_opt[3], V_p_opt[4]))
+		FI1[i]    = min(IRLC_point(IR_p_opt, tt[i], argW1, RHS_table, T_table), 12.9)
+		FI2[i]    = min(IRLC_point(IR_p_opt, tt[i], argW2, RHS_table, T_table), 11.26)
+		FVplus[i] = IRLC_point(IR_p_opt, tt[i], argVplus, RHS_table, T_table)
 
 
-###PLOT###
-plt.figure()
-
-#plt.title(r"Isotropic, Sphere, $P =  R_0/c$")
-
-st = plt.plot(tt/(tfb)*365., FVtot-3.5, linestyle = '-', color='blue', linewidth=2)
-s1 = plt.plot(tt/(tfb)*365., FsrcI1-3.5, linestyle = '--', color='black', linewidth=3)
+	FVtot = -2.5*np.log10(10.**(-FsrcI1/2.5) + 10.**(-FVplus/2.5))
 
 
-Vdat   = plt.errorbar(tV_srt, V_srt-3.5, yerr=V_sigsrt, linestyle="none", color='blue', alpha=1., elinewidth=1.5)
-Vsct   = plt.errorbar(tV_srt, V_srt-3.5, color='blue', alpha=1.)
+	###PLOT###
+	plt.figure()
 
-#Vav   = plt.errorbar(t_avg, W1_avg, yerr=W1_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
+	#plt.title(r"Isotropic, Sphere, $P =  R_0/c$")
+
+	st = plt.plot(tt/(tfb)*365., FVtot-3.5, linestyle = '-', color='blue', linewidth=2)
+	s1 = plt.plot(tt/(tfb)*365., FsrcI1-3.5, linestyle = '--', color='black', linewidth=3)
 
 
+	Vdat   = plt.errorbar(tV_srt, V_srt-3.5, yerr=V_sigsrt, linestyle="none", color='blue', alpha=1., elinewidth=1.5)
+	Vsct   = plt.errorbar(tV_srt, V_srt-3.5, color='blue', alpha=1.)
 
-IR1 = plt.plot(tt/(tfb)*365., FI1, color='orange', linewidth=3)#color='#1b9e77', linewidth=3)
-
-W1dat   = plt.errorbar(t_MJD, W1_mag, yerr=W1_sig, linestyle="none", color='orange', alpha=0.5, elinewidth=1.5)
-W1sct   = plt.scatter(t_MJD, W1_mag,   color='orange', alpha=0.5)
-
-W1av   = plt.errorbar(t_avg, W1_avg, yerr=W1_avsg, linestyle="none", color='black', alpha=1.0, elinewidth=1.5)
-W1as   = plt.scatter(t_avg, W1_avg,   color='black', alpha=1.0)
+	#Vav   = plt.errorbar(t_avg, W1_avg, yerr=W1_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
 
 
 
-IR2 = plt.plot(tt/(tfb)*365., FI2, color='red', linewidth=3)#color='#d95f02', linewidth=3)
+	IR1 = plt.plot(tt/(tfb)*365., FI1, color='orange', linewidth=3)#color='#1b9e77', linewidth=3)
 
-W2dat   = plt.errorbar(t_MJD, W2_mag, yerr=W2_sig, linestyle="none", color='red', alpha=0.5, elinewidth=1.5)
-W2sct   = plt.scatter(t_MJD, W2_mag,  color='red', alpha=0.5)
+	W1dat   = plt.errorbar(t_MJD, W1_mag, yerr=W1_sig, linestyle="none", color='orange', alpha=0.5, elinewidth=1.5)
+	W1sct   = plt.scatter(t_MJD, W1_mag,   color='orange', alpha=0.5)
 
-W2av   = plt.errorbar(t_avg, W2_avg, yerr=W2_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
-W2as   = plt.scatter(t_avg, W2_avg,   color='black', alpha=1.)
+	W1av   = plt.errorbar(t_avg, W1_avg, yerr=W1_avsg, linestyle="none", color='black', alpha=1.0, elinewidth=1.5)
+	W1as   = plt.scatter(t_avg, W1_avg,   color='black', alpha=1.0)
 
 
 
-plt.grid(b=True, which='both')
-#plt.legend( [ s1[0], IR1[0], IR2[0], IR3[0]  ], (r'$F^{\rm{src}}_{\rm{iso}}$', r'$R_d = R_0$',   r'$R_d = 0.8R_0$',   r'$R_d = 1.\bar{33}R_0$'), loc='upper right', fontsize=18)
+	IR2 = plt.plot(tt/(tfb)*365., FI2, color='red', linewidth=3)#color='#d95f02', linewidth=3)
 
-plt.xlabel(r"$t/t_{\rm{fb}}$")
-plt.ylabel("mag")
-#plt.xlim(tt[0]* Ombn/(2.*ma.pi), tt[len(tt)-1] * Ombn/(2.*ma.pi))
+	W2dat   = plt.errorbar(t_MJD, W2_mag, yerr=W2_sig, linestyle="none", color='red', alpha=0.5, elinewidth=1.5)
+	W2sct   = plt.scatter(t_MJD, W2_mag,  color='red', alpha=0.5)
 
-plt.ylim(plt.ylim(10.2, 14.5)[::-1])
+	W2av   = plt.errorbar(t_avg, W2_avg, yerr=W2_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
+	W2as   = plt.scatter(t_avg, W2_avg,   color='black', alpha=1.)
 
-plt.tight_layout()
 
-if (Fit):
-	Savename = "plots/TDE_AnalySrc_BestFits_tfb%g_clen%g_%gwalkers.png" %(tfb,clen,nwalkers)
-else:
-	Savename = "plots/TDE_AnalySrc_BestFits_tfb%g.png" %tfb
-Savename = Savename.replace('.', 'p')
-Savename = Savename.replace('ppng', '.png')
-plt.savefig(Savename)
-#plt.show()
+
+	plt.grid(b=True, which='both')
+	#plt.legend( [ s1[0], IR1[0], IR2[0], IR3[0]  ], (r'$F^{\rm{src}}_{\rm{iso}}$', r'$R_d = R_0$',   r'$R_d = 0.8R_0$',   r'$R_d = 1.\bar{33}R_0$'), loc='upper right', fontsize=18)
+
+	plt.xlabel(r"$t/t_{\rm{fb}}$")
+	plt.ylabel("mag")
+	#plt.xlim(tt[0]* Ombn/(2.*ma.pi), tt[len(tt)-1] * Ombn/(2.*ma.pi))
+
+	plt.ylim(plt.ylim(10.2, 14.5)[::-1])
+
+	plt.tight_layout()
+
+	if (Fit):
+		Savename = "plots/TDE_AnalySrc_BestFits_tfb%g_clen%g_%gwalkers.png" %(tfb,clen,nwalkers)
+	else:
+		Savename = "plots/TDE_AnalySrc_BestFits_tfb%g.png" %tfb
+	Savename = Savename.replace('.', 'p')
+	Savename = Savename.replace('ppng', '.png')
+	plt.savefig(Savename)
+	#plt.show()
 
 
 
