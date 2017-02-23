@@ -34,7 +34,7 @@ Fit_IR = True
 QvFit = False
 
 ##multiprocessing
-NThread = 4
+NThread = 32
 
 
 ##Trim beginning of Vband
@@ -371,7 +371,7 @@ if (Fit):
 		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
 		p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
 		ndim = len(p0IR)
-		nwalkers = ndim*2
+		nwalkers = ndim*8
 
 		IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_posterior, threads=NThread,args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg))
 
@@ -382,7 +382,7 @@ if (Fit):
 		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 2#4048
+		clen = 512#4048
 		IR_pos,_,_ = IR_sampler.run_mcmc(IR_walker_p0 , clen)
 
 
