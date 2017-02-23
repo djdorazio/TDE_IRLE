@@ -27,14 +27,14 @@ from emcee_Funcs_TDEs import *
 ### OPTIONS
 ################################
 ################################
-Pplot = False
+Pplot = True
 Fit = True
 Fit_Src = False
 Fit_IR = True
 QvFit = False
 
 ##multiprocessing
-NThread = 8
+NThread = 4
 
 
 ##Trim beginning of Vband
@@ -194,10 +194,11 @@ FW2_gal = 10.**(-11.26/2.5) * FW2Rel
 
 
 ###CALCUALTE HOW MUCH VBAND contributes to IR - does FV_gal go atend here?
-argVplus = [FVbndRel, Vmn, Vmx, Dst, Lav, tfb, n0, pp, aeff, nne, t0, Rde, 0.0]
+#argVplus = [FVbndRel, Vmn, Vmx, Dst, Lav, tfb, n0, pp, aeff, nne, t0, Rde, 0.0]
+argVplus = [FVbndRel, Vmn, Vmx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, 0.0]
 
-argW1 = [FW1Rel, W1mn, W1mx, Dst, Lav, tfb, n0, pp, aeff, nne, t0, Rde, FW1_gal]
-argW2 = [FW2Rel, W2mn, W2mx, Dst, Lav, tfb, n0, pp, aeff, nne, t0, Rde, FW2_gal]
+argW1 = [FW1Rel, W1mn, W1mx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FW1_gal]
+argW2 = [FW2Rel, W2mn, W2mx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FW2_gal]
 Varg  = [Dst, FVbndRel, FV_gal]
 
 
@@ -211,7 +212,7 @@ if (Fit):
 		param_names = [r"$L_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$FQ_{\rm{V}}$"]
 		p0V = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 1.0, 100.0]
 		ndim = len(p0V)
-		nwalkers = ndim*8
+		nwalkers = ndim*4
 		V_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_V_posterior, threads=NThread,args=(tV_srt, Varg, V_srt, V_sigsrt))
 
 
@@ -222,8 +223,8 @@ if (Fit):
 		V_walker_p0 = np.random.normal(V_p0, np.abs(V_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 512#4048
-		V_pos,_,_ = V_sampler.run_mcmc(V_walker_p0 , clen)
+		clen = 32#4048
+		V_pos,_,_ = V_sampler.run_mcmc(V_walker_p0, clen)
 
 
 
@@ -367,12 +368,12 @@ if (Fit):
 		##fit for Lav, tfb with optical data
 		#arg1 = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne]
 		Shell_File = "_FitALLIR_"
-		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$"]
-		p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron]
+		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
+		p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
 		ndim = len(p0IR)
 		nwalkers = ndim*2
 
-		IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_posterior, threads=NThread,args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W2_avg, W1_avsg, W2_avsg))
+		IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_posterior, threads=NThread,args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg))
 
 
 
@@ -515,7 +516,7 @@ if (Fit):
 
 
 
-If (Pplot):
+if (Pplot):
 	### PLOT POINTS
 	print "PLOTTING"
 	Nt=40
@@ -523,11 +524,11 @@ If (Pplot):
 
 	if (Fit==False):
 		#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]
-		IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron]
+		IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
 		V_p_opt = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 2.0, 100.7]
 	if (Fit_IR==False):
 		#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
-		IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron]
+		IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
 	if (Fit_Src==False):
 		V_p_opt = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 1.8, 100.]
 
@@ -539,7 +540,8 @@ If (Pplot):
 
 	#FsrcI1 = -2.5*np.log10(Fsrc_Anl(tt, Dst, Lav, tfb)/FVbndRel)
 						   #Fsrc_Anl_Fit(t, r,      Lavg,       tfb,       t0,       gam,         FQfac)
-	FsrcI1 = VLC_point(V_p_opt, tt, Varg)
+	LIRfit = IR_p_opt[4]
+	FsrcI1 = VLC_point(V_p_opt, tt, Varg, LIRfit)
 
 	for i in range(Nt):
 		#FsrcI1[i] = -2.5*np.log10(Fsrc_Anl_Fit(tt[i], Dst, V_p_opt[0], V_p_opt[2], V_p_opt[1], V_p_opt[3], V_p_opt[4]))

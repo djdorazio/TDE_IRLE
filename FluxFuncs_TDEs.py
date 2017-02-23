@@ -11,10 +11,16 @@ import scipy.signal as sgn
 
 #Goal is to output the IR flux from irradiated dust geometry surrounding TDE.
 
+
+# ###FOR TRAP INT
+# Ntrap_ph = 10.
+# Ntrap_th = 10.
+# Ntrap_nu = 10.
+
 #### INTEGRATION ERROR TOLS
 myrel = 1.e-8
 myabs = 1.e-8#1.e-60
-reclim = 10#100
+reclim = 1#100
 limlst = 1
 maxp1 = 1
 fo = 1
@@ -43,13 +49,13 @@ def Bv(nu, T):
 ## Dust absorption/emission efficiency
 def Qv(nu, nu0, nn):
 	qv = (nu/nu0)**(nn)
-	qv = min(qv, 1.0)
+	qv = np.minimum(qv, 1.0*nu/nu)
 	return qv
 
 
 def QvBv(nu, T, nu0, nn):
 	qv = (nu/nu0)**(nn)
-	qv = min(qv, 1.0)
+	qv = np.minimum(qv, 1.0*nu/nu)
 	return 2.*h*nu*nu*nu/(c*c)*1./(np.exp(  h*nu/(kb*T    )  ) - 1.) * qv
 	       
 
@@ -165,6 +171,7 @@ def Fsrc_Anl(t, r, Lavg, tfb, t0, FQfac):
 			Fsrc=FQ
 		return Fsrc
 
+#Fsrc_Anl = np.vectorize(Fsrc_Anl)
 
 
 def Fsrc_Anl_Fit(t, r, Lavg, tfb, t0, gam, FQfac):
@@ -269,7 +276,7 @@ def TDust(t,r,thet, ph, args, RHStable, Ttable):
 
 	return Td
 
-
+#TDust = np.vectorize(TDust, excluded=[4,5,6])
 
 ####################################################
 ### T is analytic when Q_nu=1
@@ -354,7 +361,7 @@ def Fnuint_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable):
 	return ma.pi* aeff*aeff/Dist/Dist * fint
 
 
-
+#Fnuint_UVthick_IRThin_Iso = np.vectorize(Fnuint_UVthick_IRThin_Iso, excluded=[5,6,7])
 
 
 #################################################################
@@ -481,6 +488,47 @@ def F_ShTorOptThin_Iso_QuadInt(numin, numax, t, Dist, Aargs, RHStable, Ttable):
 		for i in range(len(t)):
 			res.append(intg.quad(Fnu_UVthick_IRThin_QuadInt, numin, numax, args=(t[i], Dist, Aargs, RHStable, Ttable), epsabs=myabs, epsrel=myrel, limit=reclim, limlst = limlst, maxp1=maxp1,  full_output=fo  )[0])
 		return np.array(res)
+
+
+# ####USE TRAP RULE
+# def FThnu_UVthick_IRThin_QuadInt(thet, nu, t, Dist, Aargs, RHStable, Ttable):
+# 	phis = np.linspace(0.0,2.*ma.pi, Ntrap_ph)
+# 	return intg.trapz( Fnuint_UVthick_IRThin_Iso(phis, thet, nu, t, Dist, Aargs, RHStable, Ttable) )
+# 	# #phis = np.arange(0.0, 2.*ma.pi, 0.1)
+# 	# arg = []#np.zeros(len(phis))
+# 	# for i in range(len(phis)):
+# 	# 	#arg.append(Fnuint_UVthick_IRThin_Iso(phis[i], 0.0, numicron, tt, Dst, argW1, RHS_table, T_table))
+# 	# 	arg.append(Fnuint_UVthick_IRThin_Iso(phis[i], thet, nu, t, Dist, Aargs, RHStable, Ttable))
+# 	# 	#ans = intg.trapz(np.array(arg))
+
+# 	# return intg.trapz( np.array(arg) )
+# FThnu_UVthick_IRThin_QuadInt = np.vectorize(FThnu_UVthick_IRThin_QuadInt, excluded=[4,5,6])
+
+
+# def Fnu_UVthick_IRThin_QuadInt(nu, t, Dist, Aargs, RHStable, Ttable):
+# 	ths = np.linspace(0.0, ma.pi, Ntrap_th)
+# 	return intg.trapz( FThnu_UVthick_IRThin_QuadInt(ths, nu, t, Dist, Aargs, RHStable, Ttable) )
+# 	# return intg.trapz( np.array(arg) ) )
+# 	# arg = []#np.zeros(len(ths))
+# 	# for i in range(len(ths)):
+# 	# 	arg.append(FThnu_UVthick_IRThin_QuadInt(ths[i], nu, t, Dist, Aargs, RHStable, Ttable))
+# 	# return intg.trapz( np.array(arg) )
+
+# Fnu_UVthick_IRThin_QuadInt = np.vectorize(Fnu_UVthick_IRThin_QuadInt, excluded=[3,4,5])
+
+
+# def F_ShTorOptThin_Iso_QuadInt(numin, numax, t, Dist, Aargs, RHStable, Ttable):
+# 	nus = np.linspace(numin, numax, Ntrap_nu)
+# 	#if (type(t) is float or type(t) is np.float64):
+# 	return intg.trapz( Fnu_UVthick_IRThin_QuadInt(nus, t, Dist, Aargs, RHStable, Ttable))
+# 	# else:
+# 	# 	res = []
+# 	# 	for i in range(len(t)):
+# 	# 		res.append(intg.trapz(Fnu_UVthick_IRThin_QuadInt(nus, t[i], Dist, Aargs, RHStable, Ttable)))
+# 	# 	return np.array(res)
+
+# F_ShTorOptThin_Iso_QuadInt = np.vectorize(F_ShTorOptThin_Iso_QuadInt, excluded=[4,5,6])
+
 
 
 

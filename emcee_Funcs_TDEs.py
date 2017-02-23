@@ -5,7 +5,7 @@ from FluxFuncs_TDEs import *
 #PRIORS FROM MEASUREMENTS!
 def ln_IR_prior(params):
 	#etaR, cosTT, sinJJ, FQfac = params
-	etaR, cosTT, sinJJ, nu0 = params
+	etaR, cosTT, sinJJ, nu0, Lav = params
 					
 	if sinJJ < -1.0 or sinJJ > 1.0:
 		return -np.inf
@@ -17,6 +17,9 @@ def ln_IR_prior(params):
 		return -np.inf
 
 	if nu0 <= 0.0 :
+	 	return -np.inf
+
+	if Lav <= 0.0001 or Lav > 100.0 :
 	 	return -np.inf
 			
 	return 0.
@@ -54,13 +57,14 @@ def ln_IR_likelihood(p, t, THEargs1, THEargs2, RHStable, Ttable, y1, dy1, y2, dy
 
 def IRLC_point(p, t, args, RHStable, Ttable):
 	#etaR, cosT, JJt, FQfac = p
-	etaR, cosT, JJt, nu0 = p
+	etaR, cosT, JJt, nu0, Lav = p
 	FQfac = 100.0
 	nu0=nu0*numicron
+	Lav = Lav*10.**(46)
 	#Rde = Rde*pc2cm
 	thetTst = np.arccos(cosT)
 	JJt = np.arcsin(JJt)
-	FRel, numn, numx, Dst, Lav, tfb, n0, pp, aeff, nne, t0, Rde, FIR_gal = args
+	FRel, numn, numx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FIR_gal = args
 	IRargs = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, FQfac, t0, etaR]
 	return -2.5*np.log10( (F_ShTorOptThin_Iso_QuadInt(numn, numx, t, Dst, IRargs, RHStable, Ttable) + FIR_gal)/FRel)
 
@@ -71,6 +75,10 @@ def IRTDE_Err2(p, t, argW1, argW2, RHStable, Ttable, y1, dy1, y2, dy2):
 	chiW1 = (y1 - np.minimum(IRLC_point(p, t, argW1, RHStable, Ttable), 12.9) )/ dy1
 
 	chiW2 = (y2 - np.minimum(IRLC_point(p, t, argW2, RHStable, Ttable), 11.26 ))/ dy2
+
+	#print "xhiW1 = ", chiW1
+
+	#print "xhiW2 = ", chiW2
 
 	chi2 = sum(chiW1*chiW1) + sum(chiW2*chiW2) 
 	print(chi2)
@@ -89,13 +97,13 @@ def ln_V_likelihood(p, t, arg, y, dy):
 
 
 
-def VLC_point(p, t, arg):
+def VLC_point(p, t, arg, LavIRfit):
 	L0, t0, tfb, gam, FQfac = p
 	L0 = L0*10.**45
 	t0 = t0*yr2sec
 	tfb = tfb*yr2sec
 	Dst, Frel, FV_gal = arg
-	BC = 12.*5./2. ## bol corr to Vband
+	BC = 12.*5./2./LavIRfit ## bol corr to Vband
 	return -2.5*np.log10(( Fsrc_Anl_Fit(t, Dst, L0, tfb, t0, gam, FQfac)/BC + FV_gal)/Frel)
 
 
