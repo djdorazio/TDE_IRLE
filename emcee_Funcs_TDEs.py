@@ -27,22 +27,22 @@ def ln_IR_prior(params):
 
 def ln_V_prior(params):
 	#sinJJ, cosTT, Rin, alpha = params
-	L0, t0, tfb, gam, FQfac = params
+	L0, t0, tfb, gam = params
 					
-	if L0 < 0.0001 or L0 >  2.0:  ##in units of 10^45 erg/s  bol
+	if L0 < 0.0001 or L0 >  10.0:  ##in units of 10^45 erg/s  bol
 		return -np.inf
 
 	if t0 < 50./365. or t0 > 200./365.: ##dont shift more than 4 years
 		return -np.inf
 					
-	if tfb < 0.0 or tfb > 2.:
+	if tfb < 0.0 or tfb > 4.:
 		return -np.inf
 
-	if gam < 0.5 or gam > 3.0:
+	if gam < 0.1 or gam > 4.0:
 		return -np.inf
 
-	if FQfac <= 90.0 :
-		return -np.inf
+	# if FQfac <= 90.0 :
+	# 	return -np.inf
 			
 	return 0.
 
@@ -60,7 +60,7 @@ def IRLC_point(p, t, args, RHStable, Ttable):
 	etaR, cosT, JJt, nu0, Lav = p
 	FQfac = 100.0
 	nu0=nu0*numicron
-	Lav = Lav*10.**(46)
+	Lav = Lav*10.**(45)
 	#Rde = Rde*pc2cm
 	thetTst = np.arccos(cosT)
 	JJt = np.arcsin(JJt)
@@ -98,18 +98,19 @@ def ln_V_likelihood(p, t, arg, y, dy):
 
 
 def VLC_point(p, t, arg, LavIRfit):
-	L0, t0, tfb, gam, FQfac = p
+	L0, t0, tfb, gam = p
+	FQfac = 100.0
 	L0 = L0*10.**45
 	t0 = t0*yr2sec
 	tfb = tfb*yr2sec
 	Dst, Frel, FV_gal = arg
-	BC = 12.*5./2./LavIRfit ## bol corr to Vband
+	BC = 12.*5./2./LavIRfit ## bol corr to Vband - doesnt matter for fits, jsut makes Vband correct mag in end
 	return -2.5*np.log10(( Fsrc_Anl_Fit(t, Dst, L0, tfb, t0, gam, FQfac)/BC + FV_gal)/Frel)
 
 
 def VTDE_Err2(p, t, arg, y, dy):
 	print "EVAL", p
-	chi = (y - np.minimum(VLC_point(p, t, arg),17.6) )/ dy
+	chi = (y - np.minimum(VLC_point(p, t, arg, 1.0),17.6) )/ dy
 	chi2 = sum(chi*chi) 
 	print(chi2)
 	return chi2

@@ -20,7 +20,7 @@ import scipy.signal as sgn
 #### INTEGRATION ERROR TOLS
 myrel = 1.e-8
 myabs = 1.e-8#1.e-60
-reclim = 4#100
+reclim = 1#100
 limlst = 1
 maxp1 = 1
 fo = 1
@@ -160,7 +160,7 @@ def tauObs(nu, x, y, z, Rout, aeff, n0, Rd, p, thetT, JJ, nu0, nn):
 def Fsrc_Anl(t, r, Lavg, tfb, t0, FQfac):
 	F0 = Lavg/(4.*ma.pi*r*r)
 	FQ = F0/100.#FQfac
-	gam = 2.0
+	gam = 2.3
 
 
 	if ((t-t0)<=0.0):

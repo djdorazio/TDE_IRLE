@@ -34,7 +34,7 @@ Fit_IR = True
 QvFit = False
 
 ##multiprocessing
-NThread = 32
+NThread = 2
 
 
 ##Trim beginning of Vband
@@ -91,6 +91,54 @@ V_Gal = 17.6#mean(V_srtE)
 
 # magVnet = -2.5*np.log10(10.**(-V_srtE/2.5) - 10.**(-V_Gal/2.5))
 # V_srt = magVnet
+
+
+
+
+###### get average value for each cluster of data points in time
+iseg = []
+iseg.append(-1)
+for i in range(len(tV_srt)-1):
+	if (abs((tV_srt[i] - tV_srt[i+1])) > 100 ):
+		iseg.append(i)
+iseg.append(len(tV_srt)-1)
+
+tV_avg = []
+V_avg = []
+V_avsg = []
+
+#VarMn_test_W1 = []
+#VarMn_test_W2 = []
+
+
+for i in range(0 , len(iseg)-1):
+	tV_avg.append(np.mean(tV_srt[iseg[i]+1:iseg[i+1]+1]))
+
+	V_avg.append(np.mean(V_srt[iseg[i]+1:iseg[i+1]+1]))
+	
+
+	
+	Nseg = len(V_sigsrt[iseg[i]+1:iseg[i+1]]) + 1
+
+
+	V_avsg.append(np.sqrt(sum( (V_sigsrt[iseg[i]+1:iseg[i+1]])**2 )/Nseg  ))
+
+
+	# ## see if variance of means or mean of variances is larger
+	# VarMn_test_W1.append(np.mean(W1_sig[iseg[i]+1:iseg[i+1]+1])/np.std(W1_mag[iseg[i]+1:iseg[i+1]+1]))
+	# VarMn_test_W2.append(np.mean(W2_sig[iseg[i]+1:iseg[i+1]+1])/np.std(W2_mag[iseg[i]+1:iseg[i+1]+1]))
+
+
+tV_avg = np.array(tV_avg)
+V_avg = np.array(V_avg)
+V_avsg = np.array(V_avsg)
+
+
+
+
+
+
+
 
 
 ###############################
@@ -209,11 +257,12 @@ if (Fit):
 		##########################
 
 		Shell_File = "_Fit_Vband_"
-		param_names = [r"$L_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$FQ_{\rm{V}}$"]
-		p0V = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 1.0, 100.0]
+		param_names = [r"$L_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$"]
+		p0V = [0.7, t0/yr2sec, tfb/yr2sec, 2.3]
 		ndim = len(p0V)
 		nwalkers = ndim*4
-		V_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_V_posterior, threads=NThread,args=(tV_srt, Varg, V_srt, V_sigsrt))
+		#V_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_V_posterior, threads=NThread,args=(tV_srt, Varg, V_srt, V_sigsrt))
+		V_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_V_posterior, threads=NThread,args=(tV_avg, Varg, V_avg, V_avsg))
 
 
 
@@ -223,7 +272,7 @@ if (Fit):
 		V_walker_p0 = np.random.normal(V_p0, np.abs(V_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 32#4048
+		clen = 1024#4048
 		V_pos,_,_ = V_sampler.run_mcmc(V_walker_p0, clen)
 
 
@@ -371,7 +420,7 @@ if (Fit):
 		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
 		p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
 		ndim = len(p0IR)
-		nwalkers = ndim*8
+		nwalkers = ndim*6
 
 		IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_posterior, threads=NThread,args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg))
 
@@ -519,18 +568,18 @@ if (Fit):
 if (Pplot):
 	### PLOT POINTS
 	print "PLOTTING"
-	Nt=40
+	Nt=20
 	tt = np.linspace(0.00, 12.,       Nt)*tfb
 
 	if (Fit==False):
 		#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]
 		IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
-		V_p_opt = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 2.0, 100.7]
+		V_p_opt = [0.7, t0/yr2sec, tfb/yr2sec, 2.3]
 	if (Fit_IR==False):
 		#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
 		IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
 	if (Fit_Src==False):
-		V_p_opt = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 1.8, 100.]
+		V_p_opt = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 1.8]
 
 	FsrcI1 = np.zeros(Nt)
 	FVplus = np.zeros(Nt)
@@ -562,8 +611,12 @@ if (Pplot):
 	s1 = plt.plot(tt/(tfb)*365., FsrcI1-3.5, linestyle = '--', color='black', linewidth=3)
 
 
-	Vdat   = plt.errorbar(tV_srt, V_srt-3.5, yerr=V_sigsrt, linestyle="none", color='blue', alpha=1., elinewidth=1.5)
-	Vsct   = plt.errorbar(tV_srt, V_srt-3.5, color='blue', alpha=1.)
+	Vdat   = plt.errorbar(tV_srt, V_srt-3.5, yerr=V_sigsrt, linestyle="none", color='blue', alpha=0.2, elinewidth=1.5)
+	Vsct   = plt.scatter(tV_srt, V_srt-3.5, color='blue', alpha=0.2)
+
+	Vavg     = plt.errorbar(tV_avg, V_avg-3.5, yerr=V_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
+	Vavsct   = plt.scatter(tV_avg, V_avg-3.5, color='black', alpha=1.)
+
 
 	#Vav   = plt.errorbar(t_avg, W1_avg, yerr=W1_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
 
