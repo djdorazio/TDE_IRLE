@@ -52,7 +52,9 @@ def ln_IR_likelihood(p, t, THEargs1, THEargs2, RHStable, Ttable, y1, dy1, y2, dy
 	return -(IRTDE_Err2(p, t, THEargs1, THEargs2, RHStable, Ttable, y1, dy1, y2, dy2))
 		
 
-
+def ln_IR_fxdR_likelihood(p, t, THEargs1, THEargs2, RHStable, Ttable, y1, dy1, y2, dy2):
+	return -(IRTDE_fxdR_Err2(p, t, THEargs1, THEargs2, RHStable, Ttable, y1, dy1, y2, dy2))
+		
 
 
 def IRLC_point(p, t, args, RHStable, Ttable):
@@ -67,6 +69,25 @@ def IRLC_point(p, t, args, RHStable, Ttable):
 	FRel, numn, numx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FIR_gal = args
 	IRargs = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, FQfac, t0, etaR]
 	return -2.5*np.log10( (F_ShTorOptThin_Iso_QuadInt(numn, numx, t, Dst, IRargs, RHStable, Ttable) + FIR_gal)/FRel)
+
+
+
+
+
+def IRLC_fxdR_point(p, t, args, RHStable, Ttable):
+	#etaR, cosT, JJt, FQfac = p
+	Rde, cosT, JJt, nu0, Lav = p
+	FQfac = 100.0
+	nu0=nu0*numicron
+	Lav = Lav*10.**(45)
+	Rde = Rde*pc2cm
+	thetTst = np.arccos(cosT)
+	JJt = np.arcsin(JJt)
+	FRel, numn, numx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FIR_gal = args
+	IRargs = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, FQfac, t0, etaR]
+	return -2.5*np.log10( (F_fxdR_ShTorOptThin_Iso_QuadInt(numn, numx, t, Dst, IRargs, RHStable, Ttable) + FIR_gal)/FRel)
+
+
 
 
 def IRTDE_Err2(p, t, argW1, argW2, RHStable, Ttable, y1, dy1, y2, dy2):
@@ -84,6 +105,22 @@ def IRTDE_Err2(p, t, argW1, argW2, RHStable, Ttable, y1, dy1, y2, dy2):
 	print(chi2)
 	return chi2
 
+
+
+def IRTDE_fxdR_Err2(p, t, argW1, argW2, RHStable, Ttable, y1, dy1, y2, dy2):
+	print "EVAL", p
+	
+	chiW1 = (y1 - np.minimum(IRLC_fxdR_point(p, t, argW1, RHStable, Ttable), 12.9) )/ dy1
+
+	chiW2 = (y2 - np.minimum(IRLC_fxdR_point(p, t, argW2, RHStable, Ttable), 11.26 ))/ dy2
+
+	#print "xhiW1 = ", chiW1
+
+	#print "xhiW2 = ", chiW2
+
+	chi2 = sum(chiW1*chiW1) + sum(chiW2*chiW2) 
+	print(chi2)
+	return chi2
 
 
 
@@ -128,6 +165,14 @@ def ln_IR_posterior(p, t, THEargs1, THEargs2, RHStable, Ttable, y1, dy1, y2, dy2
 		return -np.inf
 	
 	ln_l = ln_IR_likelihood(p, t, THEargs1, THEargs2, RHStable, Ttable, y1, dy1, y2, dy2)
+	return ln_l + ln_p
+
+def ln_IR_fxdR_posterior(p, t, THEargs1, THEargs2, RHStable, Ttable, y1, dy1, y2, dy2):
+	ln_p = ln_IR_prior(p)
+	if not np.isfinite(ln_p):
+		return -np.inf
+	
+	ln_l = ln_IR_fxdR_likelihood(p, t, THEargs1, THEargs2, RHStable, Ttable, y1, dy1, y2, dy2)
 	return ln_l + ln_p
 
 

@@ -7,7 +7,7 @@ from scipy import *
 import emcee
 
 import matplotlib
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
@@ -32,6 +32,7 @@ Fit = True
 Fit_Src = False
 Fit_IR = True
 QvFit = False
+Rfxd = True
 
 ##multiprocessing
 NThread = 6
@@ -418,13 +419,23 @@ if (Fit):
 		##########################
 		##fit for Lav, tfb with optical data
 		#arg1 = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne]
-		Shell_File = "_FitALLIR_"
-		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
-		p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-		ndim = len(p0IR)
-		nwalkers = ndim*6
+		if (Rfxd):
+			Shell_File = "_FitALLIR_FxdR_"
+			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} mu\rm{m}\nu_0$", r"$L_{45}$"]
+			p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+			ndim = len(p0IR)
+			nwalkers = ndim*6
 
-		IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_posterior, threads=NThread,args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg))
+			IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_posterior, threads=NThread,args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg))
+
+
+		else:
+			Shell_File = "_FitALLIR_sublR_"
+			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
+			ndim = len(p0IR)
+			nwalkers = ndim*6
+
+			IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_fxdR_posterior, threads=NThread,args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg))
 
 
 
@@ -433,7 +444,7 @@ if (Fit):
 		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 64#4048
+		clen = 128#4048
 		IR_pos,_,_ = IR_sampler.run_mcmc(IR_walker_p0 , clen)
 
 
@@ -454,8 +465,8 @@ if (Fit):
 
 
 
-		IR_flatchain = np.vstack(IR_chain[:,clen/4:])
-		IR_flatlnprobs = np.vstack(IR_lnprobs[:,clen/4:])
+		IR_flatchain = np.vstack(IR_chain[:,clen/2:])
+		IR_flatlnprobs = np.vstack(IR_lnprobs[:,clen/2:])
 				
 
 		IR_p_opt = IR_flatchain[IR_flatlnprobs.argmax()]		
@@ -656,9 +667,15 @@ if (Pplot):
 	plt.tight_layout()
 
 	if (Fit):
-		Savename = "plots/TDE_AnalySrc_BestFits_tfb%g_clen%g_%gwalkers.png" %(tfb,clen,nwalkers)
+		if (Rfxd):
+			Savename = "plots/TDE_Rfxd_AnalySrc_BestFits_tfb%g_clen%g_%gwalkers.png" %(tfb,clen,nwalkers)
+		else:
+			Savename = "plots/TDE_Rsubl_AnalySrc_BestFits_tfb%g_clen%g_%gwalkers.png" %(tfb,clen,nwalkers)
 	else:
-		Savename = "plots/TDE_AnalySrc_BestFits_tfb%g.png" %tfb
+		if (Rfxd):
+			Savename = "plots/TDE_Rfxd_AnalySrc_BestFits_tfb%g.png" %tfb
+		else:
+			Savename = "plots/TDE_Rsubl_AnalySrc_BestFits_tfb%g.png" %tfb
 	Savename = Savename.replace('.', 'p')
 	Savename = Savename.replace('ppng', '.png')
 	plt.savefig(Savename)
