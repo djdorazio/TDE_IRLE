@@ -13,14 +13,14 @@ import scipy.signal as sgn
 
 
 # ###FOR TRAP INT
-# Ntrap_ph = 10.
-# Ntrap_th = 10.
-# Ntrap_nu = 10.
+Ntrap_ph = 80
+Ntrap_th = 80
+Ntrap_nu = 80
 
 #### INTEGRATION ERROR TOLS
 myrel = 1.e-8
 myabs = 1.e-8#1.e-60
-reclim = 1#100
+reclim = 10#100
 limlst = 1
 maxp1 = 1
 fo = 1
@@ -171,7 +171,7 @@ def Fsrc_Anl(t, r, Lavg, tfb, t0, FQfac):
 			Fsrc=FQ
 		return Fsrc
 
-#Fsrc_Anl = np.vectorize(Fsrc_Anl)
+Fsrc_Anl = np.vectorize(Fsrc_Anl)
 
 
 def Fsrc_Anl_Fit(t, r, Lavg, tfb, t0, gam, FQfac):
@@ -276,7 +276,7 @@ def TDust(t,r,thet, ph, args, RHStable, Ttable):
 
 	return Td
 
-#TDust = np.vectorize(TDust, excluded=[4,5,6])
+TDust = np.vectorize(TDust, excluded=[4,5,6])
 
 ####################################################
 ### T is analytic when Q_nu=1
@@ -361,7 +361,7 @@ def Fnuint_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable):
 	return ma.pi* aeff*aeff/Dist/Dist * fint
 
 
-#Fnuint_UVthick_IRThin_Iso = np.vectorize(Fnuint_UVthick_IRThin_Iso, excluded=[5,6,7])
+Fnuint_UVthick_IRThin_Iso = np.vectorize(Fnuint_UVthick_IRThin_Iso, excluded=[5,6,7])
 
 
 #################################################################
@@ -473,21 +473,62 @@ def Fnuint_OptThin_IRThin_Iso(ph, thet, r, nu, t, Dist, args, RHStable, Ttable):
 ##################
 #########
 ###Torus Shell - OPT ThICK to optical/UV, OPT THIN to IR
-#########
-def FThnu_UVthick_IRThin_QuadInt(thet, nu, t, Dist, Aargs, RHStable, Ttable):
-	return intg.quad(Fnuint_UVthick_IRThin_Iso, 0.,2.*ma.pi, args=(thet, nu, t, Dist, Aargs, RHStable, Ttable) , epsabs=myabs, epsrel=myrel, limit=reclim, limlst = limlst, maxp1=maxp1,full_output=fo  )[0]
+# #########
+# def FThnu_UVthick_IRThin_QuadInt(thet, nu, t, Dist, Aargs, RHStable, Ttable):
+# 	return intg.quad(Fnuint_UVthick_IRThin_Iso, 0.,2.*ma.pi, args=(thet, nu, t, Dist, Aargs, RHStable, Ttable) , epsabs=myabs, epsrel=myrel, limit=reclim, limlst = limlst, maxp1=maxp1,full_output=fo  )[0]
 
+# def Fnu_UVthick_IRThin_QuadInt(nu, t, Dist, Aargs, RHStable, Ttable):
+# 	return intg.quad(FThnu_UVthick_IRThin_QuadInt, 0., ma.pi, args=(nu, t, Dist, Aargs, RHStable, Ttable), epsabs=myabs, epsrel=myrel, limit=reclim, limlst = limlst, maxp1=maxp1,  full_output=fo  )[0]
+
+# def F_ShTorOptThin_Iso_QuadInt(numin, numax, t, Dist, Aargs, RHStable, Ttable):
+# 	if (type(t) is float or type(t) is np.float64):
+# 		return intg.quad(Fnu_UVthick_IRThin_QuadInt, numin, numax, args=(t, Dist, Aargs, RHStable, Ttable), epsabs=myabs, epsrel=myrel, limit=reclim, limlst = limlst, maxp1=maxp1,  full_output=fo  )[0]
+# 	else:
+# 		res = []
+# 		for i in range(len(t)):
+# 			res.append(intg.quad(Fnu_UVthick_IRThin_QuadInt, numin, numax, args=(t[i], Dist, Aargs, RHStable, Ttable), epsabs=myabs, epsrel=myrel, limit=reclim, limlst = limlst, maxp1=maxp1,  full_output=fo  )[0])
+# 		return np.array(res)
+
+
+### My own Trap Rule
+def FThnu_UVthick_IRThin_QuadInt(thet, nu, t, Dist, Aargs, RHStable, Ttable):
+	phis = np.linspace(0.0,2.*ma.pi, Ntrap_ph)
+	Trap_sub = Fnuint_UVthick_IRThin_Iso(phis[0],thet, nu, t, Dist, Aargs, RHStable, Ttable) + Fnuint_UVthick_IRThin_Iso(phis[Ntrap_ph-1],thet, nu, t, Dist, Aargs, RHStable, Ttable)
+	Trap_int = -Trap_sub +  np.sum(2.*Fnuint_UVthick_IRThin_Iso(phis,thet, nu, t, Dist, Aargs, RHStable, Ttable)) 
+	#for i in range(1,Ntrap_ph-1):
+	#	Trap_int += 2.*Fnuint_UVthick_IRThin_Iso(phis[i],thet, nu, t, Dist, Aargs, RHStable, Ttable) 
+	return 2.*ma.pi/(2.*Ntrap_ph) * (Trap_int)
+
+#FThnu_UVthick_IRThin_QuadInt = np.vectorize(FThnu_UVthick_IRThin_QuadInt, excluded=[4,5,6])
+	
 def Fnu_UVthick_IRThin_QuadInt(nu, t, Dist, Aargs, RHStable, Ttable):
-	return intg.quad(FThnu_UVthick_IRThin_QuadInt, 0., ma.pi, args=(nu, t, Dist, Aargs, RHStable, Ttable), epsabs=myabs, epsrel=myrel, limit=reclim, limlst = limlst, maxp1=maxp1,  full_output=fo  )[0]
+	ths = np.linspace(0.0, ma.pi, Ntrap_th)
+	Trap_sub = FThnu_UVthick_IRThin_QuadInt(ths[0], nu, t, Dist, Aargs, RHStable, Ttable) + FThnu_UVthick_IRThin_QuadInt(ths[Ntrap_th-1], nu, t, Dist, Aargs, RHStable, Ttable) 
+	Trap_int = -Trap_sub + np.sum(2.*FThnu_UVthick_IRThin_QuadInt(ths, nu, t, Dist, Aargs, RHStable, Ttable) )
+	#for i in range(1, Ntrap_th-1):
+	#	Trap_int += 2.*FThnu_UVthick_IRThin_QuadInt(ths[i], nu, t, Dist, Aargs, RHStable, Ttable) 
+	return ma.pi/(2.*Ntrap_th) * (Trap_int)
+
+#Fnu_UVthick_IRThin_QuadInt = np.vectorize(Fnu_UVthick_IRThin_QuadInt, excluded=[3,4,5])
 
 def F_ShTorOptThin_Iso_QuadInt(numin, numax, t, Dist, Aargs, RHStable, Ttable):
+	nus = np.linspace(numin, numax, Ntrap_nu)
 	if (type(t) is float or type(t) is np.float64):
-		return intg.quad(Fnu_UVthick_IRThin_QuadInt, numin, numax, args=(t, Dist, Aargs, RHStable, Ttable), epsabs=myabs, epsrel=myrel, limit=reclim, limlst = limlst, maxp1=maxp1,  full_output=fo  )[0]
+		Trap_sub = Fnu_UVthick_IRThin_QuadInt(nus[0], t, Dist, Aargs, RHStable, Ttable) + Fnu_UVthick_IRThin_QuadInt(nus[Ntrap_nu-1], t, Dist, Aargs, RHStable, Ttable) 
+		Trap_int = -Trap_sub + np.sum(2.*Fnu_UVthick_IRThin_QuadInt(nus, t, Dist, Aargs, RHStable, Ttable) )
+		#for i in range(1,Ntrap_nu-1):
+		#	Trap_int += 2.*Fnu_UVthick_IRThin_QuadInt(nus[i], t, Dist, Aargs, RHStable, Ttable) 
+		return (numax-numin)/(2.*Ntrap_nu) * (Trap_int)
 	else:
 		res = []
 		for i in range(len(t)):
-			res.append(intg.quad(Fnu_UVthick_IRThin_QuadInt, numin, numax, args=(t[i], Dist, Aargs, RHStable, Ttable), epsabs=myabs, epsrel=myrel, limit=reclim, limlst = limlst, maxp1=maxp1,  full_output=fo  )[0])
+			Trap_sub = Fnu_UVthick_IRThin_QuadInt(nus[0], t[i], Dist, Aargs, RHStable, Ttable) + Fnu_UVthick_IRThin_QuadInt(nus[Ntrap_nu-1], t[i], Dist, Aargs, RHStable, Ttable) 
+			Trap_int = -Trap_sub + np.sum(2.*Fnu_UVthick_IRThin_QuadInt(nus, t[i], Dist, Aargs, RHStable, Ttable) )
+			#for i in range(1,Ntrap_nu-1):
+			#	Trap_int += 2.*Fnu_UVthick_IRThin_QuadInt(nus[i], t[i], Dist, Aargs, RHStable, Ttable) 
+			res.append((numax-numin)/(2.*Ntrap_nu) * (Trap_int))
 		return np.array(res)
+
 
 
 # ####USE TRAP RULE

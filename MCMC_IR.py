@@ -34,7 +34,7 @@ Fit_IR = True
 QvFit = False
 
 ##multiprocessing
-NThread = 2
+NThread = 6
 
 
 ##Trim beginning of Vband
@@ -188,7 +188,7 @@ t0 =  175./365. * yr2sec
 ### DUST stuff
 nne = 1.6       ##emission/absortption efficeincy power law  --  Draine or 1.6 
 nu0 = numicron/3.0  ## emission/absortption efficeincy cutoff freq
-Rde = 0.1*pc2cm #* np.sqrt(Lav/10.**46) * pc2cm     ## inner edge of dust
+Rde = 0.8*pc2cm #* np.sqrt(Lav/10.**46) * pc2cm     ## inner edge of dust
 etaR = 15.0 #factor multiplying sublmation radius when using Rde(T) = subl front
 thetTst = 0.01*np.pi/4.  ## opening angle for dust torus (0 is sphere, pi/2 is ring)
 JJt = 0.01*np.pi/4.       ## inclination angle of dust torus (0 is edge on pi/2 is face on)
@@ -244,6 +244,8 @@ FW2_gal = 10.**(-11.26/2.5) * FW2Rel
 ###CALCUALTE HOW MUCH VBAND contributes to IR - does FV_gal go atend here?
 #argVplus = [FVbndRel, Vmn, Vmx, Dst, Lav, tfb, n0, pp, aeff, nne, t0, Rde, 0.0]
 argVplus = [FVbndRel, Vmn, Vmx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, 0.0]
+
+argtst = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, 100., t0, etaR]
 
 argW1 = [FW1Rel, W1mn, W1mx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FW1_gal]
 argW2 = [FW2Rel, W2mn, W2mx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FW2_gal]
@@ -431,7 +433,7 @@ if (Fit):
 		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 512#4048
+		clen = 64#4048
 		IR_pos,_,_ = IR_sampler.run_mcmc(IR_walker_p0 , clen)
 
 
@@ -568,7 +570,7 @@ if (Fit):
 if (Pplot):
 	### PLOT POINTS
 	print "PLOTTING"
-	Nt=20
+	Nt=40
 	tt = np.linspace(0.00, 12.,       Nt)*tfb
 
 	if (Fit==False):
@@ -579,7 +581,7 @@ if (Pplot):
 		#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
 		IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
 	if (Fit_Src==False):
-		V_p_opt = [Lav/10.**45, t0/yr2sec, tfb/yr2sec, 1.8]
+		V_p_opt = [0.7, t0/yr2sec, tfb/yr2sec, 2.3]
 
 	FsrcI1 = np.zeros(Nt)
 	FVplus = np.zeros(Nt)
