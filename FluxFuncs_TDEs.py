@@ -395,7 +395,7 @@ def Fnuint_fxdR_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable
 	return ma.pi* aeff*aeff/Dist/Dist * fint
 
 
-Fnuint_UVthick_IRThin_Iso = np.vectorize(Fnuint_UVthick_IRThin_Iso, excluded=[5,6,7])
+Fnuint_fxdR_UVthick_IRThin_Iso = np.vectorize(Fnuint_fxdR_UVthick_IRThin_Iso, excluded=[5,6,7])
 
 
 #################################################################

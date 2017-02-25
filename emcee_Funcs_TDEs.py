@@ -58,15 +58,15 @@ def ln_IR_fxdR_likelihood(p, t, THEargs1, THEargs2, RHStable, Ttable, y1, dy1, y
 
 
 def IRLC_point(p, t, args, RHStable, Ttable):
-	#etaR, cosT, JJt, FQfac = p
 	etaR, cosT, JJt, nu0, Lav = p
 	FQfac = 100.0
 	nu0=nu0*numicron
 	Lav = Lav*10.**(45)
-	#Rde = Rde*pc2cm
 	thetTst = np.arccos(cosT)
 	JJt = np.arcsin(JJt)
+	
 	FRel, numn, numx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FIR_gal = args
+	## Rde doesnt matter here
 	IRargs = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, FQfac, t0, etaR]
 	return -2.5*np.log10( (F_ShTorOptThin_Iso_QuadInt(numn, numx, t, Dst, IRargs, RHStable, Ttable) + FIR_gal)/FRel)
 
@@ -83,7 +83,9 @@ def IRLC_fxdR_point(p, t, args, RHStable, Ttable):
 	Rde = Rde*pc2cm
 	thetTst = np.arccos(cosT)
 	JJt = np.arcsin(JJt)
-	FRel, numn, numx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FIR_gal = args
+
+	FRel, numn, numx, Dst, tfb, n0, pp, aeff, nne, t0, etaR, FIR_gal = args
+	## etaR doesnt matter here
 	IRargs = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, FQfac, t0, etaR]
 	return -2.5*np.log10( (F_fxdR_ShTorOptThin_Iso_QuadInt(numn, numx, t, Dst, IRargs, RHStable, Ttable) + FIR_gal)/FRel)
 
