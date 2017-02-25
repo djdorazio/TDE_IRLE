@@ -32,10 +32,10 @@ Fit = True
 Fit_Src = False
 Fit_IR = True
 QvFit = False
-Rfxd = False
+Rfxd = True
 
 ##multiprocessing
-NThread = 6
+NThread = 32
 
 
 ##Trim beginning of Vband
@@ -446,7 +446,7 @@ if (Fit):
 		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 2#4048
+		clen = 512#4048
 		IR_pos,_,_ = IR_sampler.run_mcmc(IR_walker_p0 , clen)
 
 
