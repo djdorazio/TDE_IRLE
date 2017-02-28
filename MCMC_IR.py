@@ -28,14 +28,15 @@ from emcee_Funcs_TDEs import *
 ################################
 ################################
 Pplot = True
-Fit = True
-Fit_Src = False
-Fit_IR = True
+Fit = False
+Fit_fmin = True
+Fit_Src = True
+Fit_IR = False
 QvFit = False
-Rfxd = True
+Rfxd = False
 
 ##multiprocessing
-NThread = 32
+NThread = 4
 
 
 ##Trim beginning of Vband
@@ -58,7 +59,7 @@ print "Importing Data to fit..."
 ###############################
 ### OPTICAL DATA
 ################################
-Tt   =  (loadtxt("dat/Vband_Lums_All.txt", usecols=[5], comments="|", delimiter=',')  - 55000)/(1.+zTDE) 
+Tt   =  (loadtxt("dat/Vband_Lums_All.txt", usecols=[5], comments="|", delimiter=',')  - 55000)/(1.+zTDE) * day2sec
 V_mag  =  loadtxt("dat/Vband_Lums_All.txt", usecols=[1], comments="|", delimiter=',')
 V_sig =  loadtxt("dat/Vband_Lums_All.txt", usecols=[2], comments="|", delimiter=',')
 
@@ -100,7 +101,7 @@ V_Gal = 17.6#mean(V_srtE)
 iseg = []
 iseg.append(-1)
 for i in range(len(tV_srt)-1):
-	if (abs((tV_srt[i] - tV_srt[i+1])) > 100 ):
+	if (abs((tV_srt[i] - tV_srt[i+1])) > 100*day2sec ):
 		iseg.append(i)
 iseg.append(len(tV_srt)-1)
 
@@ -146,7 +147,7 @@ V_avsg = np.array(V_avsg)
 ### IR DATA
 ################################
 ### All IR DATA already cleaned and reprinted in "WISE_plotGen.py"
-t_MJD = (np.genfromtxt("dat/IR_Lums_All.txt",usecols=1, comments="|"))/(1.+zTDE) ## put in rest frame
+t_MJD = (np.genfromtxt("dat/IR_Lums_All.txt",usecols=1, comments="|"))/(1.+zTDE) * day2sec## put in rest frame
 
 W1_mag = np.genfromtxt("dat/IR_Lums_All.txt",usecols=2, comments="|")
 W2_mag = np.genfromtxt("dat/IR_Lums_All.txt",usecols=3, comments="|")
@@ -155,7 +156,7 @@ W1_sig = np.genfromtxt("dat/IR_Lums_All.txt",usecols=4, comments="|")
 W2_sig = np.genfromtxt("dat/IR_Lums_All.txt",usecols=5, comments="|")
 
 ##binned
-t_avg = (np.genfromtxt("dat/IR_Lums_Avg.txt",usecols=0, comments="|"))/(1.+zTDE) ## put in rest frame
+t_avg = (np.genfromtxt("dat/IR_Lums_Avg.txt",usecols=0, comments="|"))/(1.+zTDE) * day2sec## put in rest frame
 
 W1_avg = np.genfromtxt("dat/IR_Lums_Avg.txt",usecols=1, comments="|")
 W2_avg = np.genfromtxt("dat/IR_Lums_Avg.txt",usecols=2, comments="|")
@@ -170,6 +171,12 @@ W2_avg = np.array(W2_avg)
 W1_avsg = np.array(W1_avsg)
 W2_avsg = np.array(W2_avsg)
 
+##TEMP CHECK
+# W1_avsg[0] = W1_avsg[0]*10.
+# W1_avsg[1] = W1_avsg[1]*10.
+
+# W2_avsg[0] = W2_avsg[0]*10.
+# W2_avsg[1] = W2_avsg[1]*10.
 
 ## subtract off galaxy background form first two preflare epochs
 # magW1net = -2.5*np.log10(10.**(-W1_avg/2.5) - 10.**(-12.9/2.5))
@@ -180,10 +187,12 @@ W2_avsg = np.array(W2_avsg)
 ##########################
 ## SOURCE PROPERTIES
 ##########################
-Lav = 10.**45 #erg/s
+#BEST FITS:
+Lav = 1.3559*10.**45 #erg/s
 Dst = 0.513*10**9*pc2cm
-tfb = 1.0 * yr2sec
-t0 =  175./365. * yr2sec
+tfb =  0.9973 * yr2sec
+t0 =  0.0614  * yr2sec
+gam = 0.9978 #2.3
 
 ## TEST VALUES
 ### DUST stuff
@@ -244,13 +253,73 @@ FW2_gal = 10.**(-11.26/2.5) * FW2Rel
 
 ###CALCUALTE HOW MUCH VBAND contributes to IR - does FV_gal go atend here?
 #argVplus = [FVbndRel, Vmn, Vmx, Dst, Lav, tfb, n0, pp, aeff, nne, t0, Rde, 0.0]
-argVplus = [FVbndRel, Vmn, Vmx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, 0.0]
+argVplus = [FVbndRel, Vmn, Vmx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, 0.0, gam]
 
-argtst = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, 100., t0, etaR]
+argtst = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, 100., t0, etaR, gam]
 
-argW1 = [FW1Rel, W1mn, W1mx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FW1_gal]
-argW2 = [FW2Rel, W2mn, W2mx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FW2_gal]
+argW1 = [FW1Rel, W1mn, W1mx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FW1_gal, gam]
+argW2 = [FW2Rel, W2mn, W2mx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FW2_gal, gam]
 Varg  = [Dst, FVbndRel, FV_gal]
+
+
+
+
+
+
+
+
+
+
+if (Fit_fmin):
+	from scipy import optimize
+	from scipy.optimize import fmin
+
+
+
+	#arg1 = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne]
+	if (Rfxd):
+		Shell_File = "_FitALLIR_FxdR_Trap80_fmin_"
+		param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} mu\rm{m}\nu_0$", r"$L_{45}$"]
+		p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+		IR_p0 = np.array(p0IR)
+		#p0IR = [0.229, 0.862, 0.05, 0.147, 18.4891]
+		popt  = sc.optimize.fmin(IRTDE_fxdR_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.01)[0]
+
+		
+
+	else:
+		Shell_File = "_FitALLIR_sublR_Trap80_fmin_"
+		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
+		p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+		IR_p0 = np.array(p0IR)
+		popt  = sc.optimize.fmin(IRTDE_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.01)[0]
+
+
+	IR_p_opt = popt
+
+	filename = "emcee_Results/TDE_results_"+Shell_File+".txt"
+	print "Printing Results"
+	target = open(filename, 'w')
+	target.truncate()
+
+	for i in range(len(popt)):
+		target.write("param_names[i] = %g" %popt[i])
+		target.write("\n")
+
+	target.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 if (Fit):
@@ -263,7 +332,7 @@ if (Fit):
 		param_names = [r"$L_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$"]
 		p0V = [0.7, t0/yr2sec, tfb/yr2sec, 2.3]
 		ndim = len(p0V)
-		nwalkers = ndim*4
+		nwalkers = ndim*8
 		#V_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_V_posterior, threads=NThread,args=(tV_srt, Varg, V_srt, V_sigsrt))
 		V_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_V_posterior, threads=NThread,args=(tV_avg, Varg, V_avg, V_avsg))
 
@@ -275,7 +344,7 @@ if (Fit):
 		V_walker_p0 = np.random.normal(V_p0, np.abs(V_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 1024#4048
+		clen = 1024
 		V_pos,_,_ = V_sampler.run_mcmc(V_walker_p0, clen)
 
 
@@ -423,7 +492,9 @@ if (Fit):
 		if (Rfxd):
 			Shell_File = "_FitALLIR_FxdR_Trap80_"
 			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} mu\rm{m}\nu_0$", r"$L_{45}$"]
-			p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+			#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+			#fmin best
+			p0IR = [0.799831, 0.978818, 0.00773126, 0.337469, 1.02203 ]
 			ndim = len(p0IR)
 			nwalkers = ndim*6
 
@@ -433,7 +504,9 @@ if (Fit):
 		else:
 			Shell_File = "_FitALLIR_sublR_Trap80_"
 			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
-			p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+			#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+			#fmin
+			p0IR  = [16.0895,   0.999978,  0.00714617,  0.358507,  0.914976]
 			ndim = len(p0IR)
 			nwalkers = ndim*6
 
@@ -446,7 +519,7 @@ if (Fit):
 		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 512#4048
+		clen = 32#4048
 		IR_pos,_,_ = IR_sampler.run_mcmc(IR_walker_p0 , clen)
 
 
@@ -584,29 +657,38 @@ if (Fit):
 if (Pplot):
 	### PLOT POINTS
 	print "PLOTTING"
-	Nt=40
+	Nt=20
 	tt = np.linspace(0.00, 12.,       Nt)*tfb
 
-	if (Fit==False):
-		#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]
-		if (Rfxd):
-			IR_p_opt = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
-		else:
-			IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
-		V_p_opt = [0.7, t0/yr2sec, tfb/yr2sec, 2.3]
-	if (Fit_IR==False):
-		#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
-		if (Rfxd):
-			IR_p_opt = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
-		else:
-			IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
-	if (Fit_Src==False):
-		V_p_opt = [0.7, t0/yr2sec, tfb/yr2sec, 2.3]
+	if (Fit_fmin == False):
+		if (Fit==False):
+			Shell_File = '_No_Fit_'
+			#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]
+			if (Rfxd):
+				#IR_p_opt = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
+				#From 1024 run
+				IR_p_opt = [0.799831, 0.978818, 0.00773126, 0.337469, 1.02203 ]
+			else:
+				#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
+				#fmin best
+				IR_p_opt = [16.0895,   0.999978,  0.00714617,  0.358507,  0.914976]
+			V_p_opt = [IR_p_opt[4], t0/yr2sec, tfb/yr2sec, gam]
+		if (Fit==True and Fit_IR==False):
+			#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
+			if (Rfxd):
+				IR_p_opt = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
+			else:
+				IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
+		if (Fit==True and Fit_Src==False):
+			V_p_opt = [IR_p_opt[4], t0/yr2sec, tfb/yr2sec, gam]
+	else:
+		V_p_opt = [IR_p_opt[4], t0/yr2sec, tfb/yr2sec, gam]
 
 	FsrcI1 = np.zeros(Nt)
 	FVplus = np.zeros(Nt)
 	FI1 = np.zeros(Nt)
 	FI2 = np.zeros(Nt)
+	F1chk = np.zeros(len(t_avg))
 
 
 	#FsrcI1 = -2.5*np.log10(Fsrc_Anl(tt, Dst, Lav, tfb)/FVbndRel)
@@ -625,6 +707,12 @@ if (Pplot):
 			FI2[i]    = min(IRLC_point(IR_p_opt, tt[i], argW2, RHS_table, T_table), 11.26)
 			FVplus[i] = IRLC_point(IR_p_opt, tt[i], argVplus, RHS_table, T_table)
 
+	for i in range(len(t_avg)):
+		if (Rfxd):
+			F1chk[i]  = min(IRLC_fxdR_point(IR_p_opt, t_avg[i], argW1, RHS_table, T_table), 12.9)
+		else:
+			F1chk[i]  = min(IRLC_point(IR_p_opt, t_avg[i], argW1, RHS_table, T_table), 12.9)
+
 
 	FVtot = -2.5*np.log10(10.**(-FsrcI1/2.5) + 10.**(-FVplus/2.5))
 
@@ -638,15 +726,17 @@ if (Pplot):
 		R0s = 0.5*IR_p_opt[0]
 		plt.title(r"$R = %g L^{1/2}_{46} pc$" %R0s)
 
+	plt.scatter(t_avg/day2sec, F1chk, color='orange')
+
 	st = plt.plot(tt/(tfb)*365., FVtot-3.5, linestyle = '-', color='blue', linewidth=2)
 	s1 = plt.plot(tt/(tfb)*365., FsrcI1-3.5, linestyle = '--', color='black', linewidth=3)
 
 
-	Vdat   = plt.errorbar(tV_srt, V_srt-3.5, yerr=V_sigsrt, linestyle="none", color='blue', alpha=0.2, elinewidth=1.5)
-	Vsct   = plt.scatter(tV_srt, V_srt-3.5, color='blue', alpha=0.2)
+	Vdat   = plt.errorbar(tV_srt/day2sec, V_srt-3.5, yerr=V_sigsrt, linestyle="none", color='blue', alpha=0.2, elinewidth=1.5)
+	Vsct   = plt.scatter(tV_srt/day2sec, V_srt-3.5, color='blue', alpha=0.2)
 
-	Vavg     = plt.errorbar(tV_avg, V_avg-3.5, yerr=V_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
-	Vavsct   = plt.scatter(tV_avg, V_avg-3.5, color='black', alpha=1.)
+	Vavg     = plt.errorbar(tV_avg/day2sec, V_avg-3.5, yerr=V_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
+	Vavsct   = plt.scatter(tV_avg/day2sec, V_avg-3.5, color='black', alpha=1.)
 
 
 	#Vav   = plt.errorbar(t_avg, W1_avg, yerr=W1_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
@@ -655,21 +745,21 @@ if (Pplot):
 
 	IR1 = plt.plot(tt/(tfb)*365., FI1, color='orange', linewidth=3)#color='#1b9e77', linewidth=3)
 
-	W1dat   = plt.errorbar(t_MJD, W1_mag, yerr=W1_sig, linestyle="none", color='orange', alpha=0.5, elinewidth=1.5)
-	W1sct   = plt.scatter(t_MJD, W1_mag,   color='orange', alpha=0.5)
+	W1dat   = plt.errorbar(t_MJD/day2sec, W1_mag, yerr=W1_sig, linestyle="none", color='orange', alpha=0.5, elinewidth=1.5)
+	W1sct   = plt.scatter(t_MJD/day2sec, W1_mag,   color='orange', alpha=0.5)
 
-	W1av   = plt.errorbar(t_avg, W1_avg, yerr=W1_avsg, linestyle="none", color='black', alpha=1.0, elinewidth=1.5)
-	W1as   = plt.scatter(t_avg, W1_avg,   color='black', alpha=1.0)
+	W1av   = plt.errorbar(t_avg/day2sec, W1_avg, yerr=W1_avsg, linestyle="none", color='black', alpha=1.0, elinewidth=1.5)
+	W1as   = plt.scatter(t_avg/day2sec, W1_avg,   color='black', alpha=1.0)
 
 
 
 	IR2 = plt.plot(tt/(tfb)*365., FI2, color='red', linewidth=3)#color='#d95f02', linewidth=3)
 
-	W2dat   = plt.errorbar(t_MJD, W2_mag, yerr=W2_sig, linestyle="none", color='red', alpha=0.5, elinewidth=1.5)
-	W2sct   = plt.scatter(t_MJD, W2_mag,  color='red', alpha=0.5)
+	W2dat   = plt.errorbar(t_MJD/day2sec, W2_mag, yerr=W2_sig, linestyle="none", color='red', alpha=0.5, elinewidth=1.5)
+	W2sct   = plt.scatter(t_MJD/day2sec, W2_mag,  color='red', alpha=0.5)
 
-	W2av   = plt.errorbar(t_avg, W2_avg, yerr=W2_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
-	W2as   = plt.scatter(t_avg, W2_avg,   color='black', alpha=1.)
+	W2av   = plt.errorbar(t_avg/day2sec, W2_avg, yerr=W2_avsg, linestyle="none", color='black', alpha=1., elinewidth=1.5)
+	W2as   = plt.scatter(t_avg/day2sec, W2_avg,   color='black', alpha=1.)
 
 
 
@@ -686,14 +776,14 @@ if (Pplot):
 
 	if (Fit):
 		if (Rfxd):
-			Savename = "plots/TDE_Rfxd_AnalySrc_BestFits_tfb%g_clen%g_%gwalkers.png" %(tfb,clen,nwalkers)
+			Savename = "plots/"+Shell_File+"TDE_Rfxd_AnalySrc_BestFits_tfb%g_clen%g_%gwalkers.png" %(tfb,clen,nwalkers)
 		else:
-			Savename = "plots/TDE_Rsubl_AnalySrc_BestFits_tfb%g_clen%g_%gwalkers.png" %(tfb,clen,nwalkers)
+			Savename = "plots/"+Shell_File+"TDE_Rsubl_AnalySrc_BestFits_tfb%g_clen%g_%gwalkers.png" %(tfb,clen,nwalkers)
 	else:
 		if (Rfxd):
-			Savename = "plots/TDE_Rfxd_AnalySrc_BestFits_tfb%g.png" %tfb
+			Savename = "plots/"+Shell_File+"TDE_Rfxd_AnalySrc_BestFits_tfb%g.png" %tfb
 		else:
-			Savename = "plots/TDE_Rsubl_AnalySrc_BestFits_tfb%g.png" %tfb
+			Savename = "plots/"+Shell_File+"TDE_Rsubl_AnalySrc_BestFits_tfb%g.png" %tfb
 	Savename = Savename.replace('.', 'p')
 	Savename = Savename.replace('ppng', '.png')
 	plt.savefig(Savename)

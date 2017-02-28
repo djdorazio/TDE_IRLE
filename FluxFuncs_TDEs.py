@@ -39,6 +39,7 @@ numicron = c/(10**(-4))
 
 yr2sec = 3600.*24.*365.25
 days2yrs = 1./365.
+day2sec = 3600.*24.
 
 
 
@@ -157,10 +158,10 @@ def tauObs(nu, x, y, z, Rout, aeff, n0, Rd, p, thetT, JJ, nu0, nn):
 ####################################################
 ### optical/UV source 
 ####################################################
-def Fsrc_Anl(t, r, Lavg, tfb, t0, FQfac):
+def Fsrc_Anl(t, r, Lavg, tfb, t0, gam, FQfac):
 	F0 = Lavg/(4.*ma.pi*r*r)
 	FQ = F0/100.#FQfac
-	gam = 2.3
+	#gam = 2.3
 
 
 	if ((t-t0)<=0.0):
@@ -177,6 +178,9 @@ Fsrc_Anl = np.vectorize(Fsrc_Anl)
 def Fsrc_Anl_Fit(t, r, Lavg, tfb, t0, gam, FQfac):
 	F0 = Lavg/(4.*ma.pi*r*r)
 	FQ = F0/FQfac
+	#gam = 2.3
+	#FQ = F0/100.0
+	#gam = 2.3
 	#nuVbnd = c/(5.45*10**(-5))
 	#FVbndRel = 3.636*10**(-20)*nuVbnd 
 	#BC=10.0
@@ -209,7 +213,9 @@ def Fsrc_Anl_Fit(t, r, Lavg, tfb, t0, gam, FQfac):
 ### Compute Dust temperature from Therm Eql
 ####################################################
 def TDust(t,r,thet, ph, args, RHStable, Ttable):
-	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR = args
+#TDust(tem, Rd, thet, ph, args, RHStable, Ttable)
+	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
+	#Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
 	#Rd = 0.0
 	#Loft = Fsrc_Anl(t, r, Lavg, tfb, t0, FQfac) * 4.*ma.pi*r*r
 	#r = etaR * 0.5 * pc2cm * (Loft/(10.**(46)))**(0.5) ##sublimatin front
@@ -228,7 +234,7 @@ def TDust(t,r,thet, ph, args, RHStable, Ttable):
 		###-----------------###
 		### COMPUTE Fsrc    ###
 		###-----------------###
-		Fsrc = Fsrc_Anl(t, r, Lavg, tfb, t0, FQfac)
+		Fsrc = Fsrc_Anl(t, r, Lavg, tfb, t0, gam, FQfac)
 		
 
 
@@ -282,7 +288,7 @@ TDust = np.vectorize(TDust, excluded=[4,5,6])
 ### T is analytic when Q_nu=1
 ####################################################
 def TDust_Anl(t,r,thet, ph, args):
-	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR = args
+	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
 
 	#Loft = Fsrc_Anl(t, r, Lavg, tfb, t0, FQfac) * 4.*ma.pi*r*r
 	#r = etaR * 0.5 * pc2cm * (Loft/(10.**(46)))**(0.5) ##sublimatin front
@@ -304,7 +310,7 @@ def TDust_Anl(t,r,thet, ph, args):
 		### COMPUTE Fsrc    ###
 		###-----------------###
 
-		Fsrc = Fsrc_Anl(t, r, Lavg, tfb, t0, FQfac)
+		Fsrc = Fsrc_Anl(t, r, Lavg, tfb, t0, gam, FQfac)
 		#Fsrc = Fsrc_Anl_subl(t, r, Lavg, tfb, t0, FQfac)
 
 
@@ -330,9 +336,10 @@ def TDust_Anl(t,r,thet, ph, args):
 ####################################################
 
 def Fnuint_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable):
-	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR = args
-
-	Loft = Fsrc_Anl(t, Rd, Lavg, tfb, t0, FQfac) * 4.*ma.pi*Rd*Rd
+					#	phis[0],thet, nu, t, Dist, Aargs, RHStable, Ttable
+	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
+   #[Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, FQfac, t0, etaR, gam]
+	Loft = Fsrc_Anl(t, Rd, Lavg, tfb, t0, gam, FQfac) * 4.*ma.pi*Rd*Rd
 	Rd = etaR * 0.5 * pc2cm * (Loft/(10.**(46)))**(0.5)
 ###----------------------------###
 ### SETUP COORDS TO INTEGRATE  ###
@@ -364,7 +371,8 @@ def Fnuint_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable):
 Fnuint_UVthick_IRThin_Iso = np.vectorize(Fnuint_UVthick_IRThin_Iso, excluded=[5,6,7])
 
 def Fnuint_fxdR_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable):
-	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR = args
+	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
+  #[Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, FQfac, t0, etaR, gam]
 
 	#Loft = Fsrc_Anl(t, Rd, Lavg, tfb, t0, FQfac) * 4.*ma.pi*Rd*Rd
 	#Rd = etaR * 0.5 * pc2cm * (Loft/(10.**(46)))**(0.5)
@@ -377,7 +385,7 @@ def Fnuint_fxdR_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable
 
 
 	# Tdust 
-	Tdust = TDust(tem, Rd, thet, ph,  args, RHStable, Ttable)
+	Tdust = TDust(tem, Rd, thet, ph, args, RHStable, Ttable)
 	#Tdust = TDust_Anl(tem, Rd, thet, ph, args)
 
 
@@ -404,7 +412,7 @@ Fnuint_fxdR_UVthick_IRThin_Iso = np.vectorize(Fnuint_fxdR_UVthick_IRThin_Iso, ex
 ## Allow the optical/UV to penetrate the dust, so optically think to opical/UV out to some distance
 ## must still assume opt thin to IR
 def Fnuint_OptThin_IRThin_Iso(ph, thet, r, nu, t, Dist, args, RHStable, Ttable): #, tauGrid):	
-	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR = args
+	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
 	## where UV penetrates out to (tau_UV=1)
 	Rout = 2. * Rd*(  1. - (p - 1.)/(n0*ma.pi*aeff*aeff*Rd)  )**(1./(1. - p)) #+ 0.01*Rd
 
@@ -422,7 +430,7 @@ def Fnuint_OptThin_IRThin_Iso(ph, thet, r, nu, t, Dist, args, RHStable, Ttable):
 
 
 	# Tdust for doppler source
-	Tdust = TDust(tem, Rd, thet, ph,  args, RHStable, Ttable)
+	Tdust = TDust(tem, Rd, thet, ph, args, RHStable, Ttable)
 	#Tdust = TDust_Anl(tem, Rd, thet, ph, args)
 
 	fint = Qv(nu, nu0, nn) * 2.*h*nu*nu*nu/(c*c)*1./(np.exp(  h*nu/(kb*Tdust)  ) - 1.)
