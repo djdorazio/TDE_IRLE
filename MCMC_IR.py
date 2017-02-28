@@ -187,12 +187,20 @@ W2_avsg = np.array(W2_avsg)
 ## SOURCE PROPERTIES
 ##########################
 #BEST FITS:
+# Lav = 10.**45 #erg/s
+# LVbnd = 0.18523108#*10.**45
+# Dst = 0.513*10**9*pc2cm
+# t0 =  0.75866946  * yr2sec
+# tfb = 0.02625009 * yr2sec
+# gam = 1.12948904
+#^mcmc beest fit [ 0.18523108,  0.75866946,  0.02625009,  1.12948904]
 Lav = 10.**45 #erg/s
-LVbnd = 0.16387289#*10.**45
+LVbnd = 0.0387673
 Dst = 0.513*10**9*pc2cm
-t0 =  0.76410863  * yr2sec
-tfb = 0.0312273 * yr2sec
-gam = 1.15302285
+t0 =  0.49686742  * yr2sec
+tfb = 0.50811559 * yr2sec
+gam = 1.74163261
+#^restricting tfb min to be 0.5 [ 0.0387673 ,  0.49686742,  0.50811559,  1.74163261]
 
 ## TEST VALUES
 ### DUST stuff
@@ -281,10 +289,11 @@ if (Fit_fmin):
 		Shell_File = "_FitALLIR_FxdR_Trap80_fmin_"
 		param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} mu\rm{m}\nu_0$", r"$L_{45}$"]
 		#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-		p0IR = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
+		#longer fallback
+		p0IR = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
 		IR_p0 = np.array(p0IR)
 		#p0IR = [0.229, 0.862, 0.05, 0.147, 18.4891]
-		popt  = sc.optimize.fmin(IRTDE_fxdR_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.01)[0]
+		popt  = sc.optimize.fmin(IRTDE_fxdR_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.0001)[0]
 
 		
 
@@ -292,9 +301,11 @@ if (Fit_fmin):
 		Shell_File = "_FitALLIR_sublR_Trap80_fmin_"
 		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
 		#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-		p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
+		#p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
+		#longer fallback
+		p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00]
 		IR_p0 = np.array(p0IR)
-		popt  = sc.optimize.fmin(IRTDE_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.01)[0]
+		popt  = sc.optimize.fmin(IRTDE_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.0001)[0]
 
 
 	IR_p_opt = popt
@@ -346,7 +357,7 @@ if (Fit):
 		V_walker_p0 = np.random.normal(V_p0, np.abs(V_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 2048
+		clen = 4096
 		V_pos,_,_ = V_sampler.run_mcmc(V_walker_p0, clen)
 
 
@@ -401,8 +412,8 @@ if (Fit):
 
 
 		###CORNER PLOT	
-		V_flatchain = np.vstack(V_chain[:,clen/2:])
-		V_flatlnprobs = np.vstack(V_lnprobs[:,clen/2:])
+		V_flatchain = np.vstack(V_chain[:,clen/4:])
+		V_flatlnprobs = np.vstack(V_lnprobs[:,clen/4:])
 
 
 
@@ -496,7 +507,10 @@ if (Fit):
 			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} mu\rm{m}\nu_0$", r"$L_{45}$"]
 			#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
 			#fmin best
-			p0IR = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
+			#p0IR = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
+			#p0IR =[  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00]
+			##longer fall back
+			p0IR = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
 			ndim = len(p0IR)
 			nwalkers = ndim*6
 
@@ -508,7 +522,10 @@ if (Fit):
 			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
 			#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
 			#fmin
-			p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
+			#p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
+			#p0IR = [  1.62162628e+01,   9.94984173e-01,   9.07876972e-03, 9.44932700e-03,   2.70076201e+00]
+			#longer fallback
+			p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00]
 			ndim = len(p0IR)
 			nwalkers = ndim*6
 
@@ -659,7 +676,7 @@ if (Fit):
 if (Pplot):
 	### PLOT POINTS
 	print "PLOTTING"
-	Nt=40
+	Nt=50
 	tt = np.linspace(0.00, 12.,       Nt)*yr2sec
 
 	if (Fit_fmin == False):
@@ -669,18 +686,22 @@ if (Pplot):
 			if (Rfxd):
 				#IR_p_opt = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
 				#From 1024 run
-				IR_p_opt = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
+				#IR_p_opt = [  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00]
+				#longer fallback
+				IR_p_opt = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
 			else:
 				#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
 				#fmin best
-				IR_p_opt = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
+				#IR_p_opt =[  1.62162628e+01,   9.94984173e-01,   9.07876972e-03, 9.44932700e-03,   2.70076201e+00]
+				#longer fallback
+				IR_p_opt = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00]
 			V_p_opt = [LVbnd, t0/yr2sec, tfb/yr2sec, gam]
 		if (Fit==True and Fit_IR==False and Fit_Src==True):
 			#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
 			if (Rfxd):
-				IR_p_opt = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
+				IR_p_opt = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
 			else:
-				IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
+				IR_p_opt =[  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00]
 		if (Fit==True and Fit_Src==False and Fit_IR==True):
 			V_p_opt = [LVbnd, t0/yr2sec, tfb/yr2sec, gam]
 	else:
@@ -723,12 +744,12 @@ if (Pplot):
 	plt.figure()
 
 	if (Rfxd):
-		plt.title(r"$R = %g pc$" %IR_p_opt[0])
+		plt.title(r"$R = %g$ pc" %IR_p_opt[0])
 	else:
-		R0s = 0.5*IR_p_opt[0]
-		plt.title(r"$R = %g L^{1/2}_{46} pc$" %R0s)
+		R0s = 0.05*IR_p_opt[0]
+		plt.title(r"$R = %g L^{1/2}_{44}$ pc" %R0s)
 
-	plt.scatter(t_avg/day2sec, F1chk, color='orange')
+	#plt.scatter(t_avg/day2sec, F1chk, color='orange')
 
 	st = plt.plot(tt/(yr2sec)*365., FVtot-3.5, linestyle = '-', color='blue', linewidth=2)
 	s1 = plt.plot(tt/(yr2sec)*365., FsrcI1-3.5, linestyle = '--', color='black', linewidth=3)
@@ -772,7 +793,7 @@ if (Pplot):
 	plt.ylabel("mag")
 	#plt.xlim(tt[0]* Ombn/(2.*ma.pi), tt[len(tt)-1] * Ombn/(2.*ma.pi))
 
-	plt.ylim(plt.ylim(10.2, 14.5)[::-1])
+	plt.ylim(plt.ylim(10.0, 14.5)[::-1])
 
 	plt.tight_layout()
 

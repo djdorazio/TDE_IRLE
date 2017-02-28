@@ -29,13 +29,13 @@ def ln_V_prior(params):
 	#sinJJ, cosTT, Rin, alpha = params
 	L0, t0, tfb, gam = params
 					
-	if L0 < 0.001 or L0 >  10.0:  ##in units of 10^45 erg/s  bol
+	if L0 <= 0.0 or L0 > 10.0:  ##in units of 10^45 erg/s  bol
 		return -np.inf
 
 	if t0 < 0.0 or t0 > 2.0: ##dont shift more than 4 years
 		return -np.inf
 					
-	if tfb < 0.0 or tfb > 4.:
+	if tfb < 0.5 or tfb > 5.:
 		return -np.inf
 
 	if gam < 0.1 or gam > 4.0:
