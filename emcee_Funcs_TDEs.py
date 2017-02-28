@@ -169,7 +169,7 @@ def VLC_point(p, t, arg, LavIRfit):
 	t0 = t0*yr2sec
 	tfb = tfb*yr2sec
 	Dst, Frel, FV_gal = arg
-	BC = 12.*5./2.*LavIRfit ## bol corr to Vband - doesnt matter for fits, jsut makes Vband correct mag in end
+	BC = 1.0#12.*5./2.*LavIRfit ## bol corr to Vband - doesnt matter for fits, jsut makes Vband correct mag in end
 	#return -2.5*np.log10(( Fsrc_Anl_Fit(t, Dst, L0, tfb, t0, gam, FQfac)/BC + FV_gal)/Frel)
 	return -2.5*np.log10(( Fsrc_Anl(t, Dst, L0/BC, tfb, t0, gam, FQfac) + FV_gal)/Frel)
 

@@ -28,15 +28,14 @@ from emcee_Funcs_TDEs import *
 ################################
 ################################
 Pplot = True
-Fit = False
-Fit_fmin = True
-Fit_Src = True
-Fit_IR = False
-QvFit = False
-Rfxd = False
+Fit = True
+Fit_fmin = False
+Fit_Src = False
+Fit_IR = True
+Rfxd = True
 
 ##multiprocessing
-NThread = 4
+NThread = 32
 
 
 ##Trim beginning of Vband
@@ -188,11 +187,12 @@ W2_avsg = np.array(W2_avsg)
 ## SOURCE PROPERTIES
 ##########################
 #BEST FITS:
-Lav = 1.3559*10.**45 #erg/s
+Lav = 10.**45 #erg/s
+LVbnd = 0.16387289#*10.**45
 Dst = 0.513*10**9*pc2cm
-tfb =  0.9973 * yr2sec
-t0 =  0.0614  * yr2sec
-gam = 0.9978 #2.3
+t0 =  0.76410863  * yr2sec
+tfb = 0.0312273 * yr2sec
+gam = 1.15302285
 
 ## TEST VALUES
 ### DUST stuff
@@ -280,7 +280,8 @@ if (Fit_fmin):
 	if (Rfxd):
 		Shell_File = "_FitALLIR_FxdR_Trap80_fmin_"
 		param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} mu\rm{m}\nu_0$", r"$L_{45}$"]
-		p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+		#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+		p0IR = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
 		IR_p0 = np.array(p0IR)
 		#p0IR = [0.229, 0.862, 0.05, 0.147, 18.4891]
 		popt  = sc.optimize.fmin(IRTDE_fxdR_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.01)[0]
@@ -290,7 +291,8 @@ if (Fit_fmin):
 	else:
 		Shell_File = "_FitALLIR_sublR_Trap80_fmin_"
 		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
-		p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+		#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+		p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
 		IR_p0 = np.array(p0IR)
 		popt  = sc.optimize.fmin(IRTDE_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.01)[0]
 
@@ -330,7 +332,7 @@ if (Fit):
 
 		Shell_File = "_Fit_Vband_"
 		param_names = [r"$L_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$"]
-		p0V = [0.7, t0/yr2sec, tfb/yr2sec, 2.3]
+		p0V = [LVbnd, t0/yr2sec, tfb/yr2sec, gam]
 		ndim = len(p0V)
 		nwalkers = ndim*8
 		#V_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_V_posterior, threads=NThread,args=(tV_srt, Varg, V_srt, V_sigsrt))
@@ -344,7 +346,7 @@ if (Fit):
 		V_walker_p0 = np.random.normal(V_p0, np.abs(V_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 1024
+		clen = 2048
 		V_pos,_,_ = V_sampler.run_mcmc(V_walker_p0, clen)
 
 
@@ -494,7 +496,7 @@ if (Fit):
 			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} mu\rm{m}\nu_0$", r"$L_{45}$"]
 			#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
 			#fmin best
-			p0IR = [0.799831, 0.978818, 0.00773126, 0.337469, 1.02203 ]
+			p0IR = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
 			ndim = len(p0IR)
 			nwalkers = ndim*6
 
@@ -506,7 +508,7 @@ if (Fit):
 			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
 			#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
 			#fmin
-			p0IR  = [16.0895,   0.999978,  0.00714617,  0.358507,  0.914976]
+			p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
 			ndim = len(p0IR)
 			nwalkers = ndim*6
 
@@ -519,7 +521,7 @@ if (Fit):
 		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 32#4048
+		clen = 512#4048
 		IR_pos,_,_ = IR_sampler.run_mcmc(IR_walker_p0 , clen)
 
 
@@ -657,8 +659,8 @@ if (Fit):
 if (Pplot):
 	### PLOT POINTS
 	print "PLOTTING"
-	Nt=20
-	tt = np.linspace(0.00, 12.,       Nt)*tfb
+	Nt=40
+	tt = np.linspace(0.00, 12.,       Nt)*yr2sec
 
 	if (Fit_fmin == False):
 		if (Fit==False):
@@ -667,22 +669,22 @@ if (Pplot):
 			if (Rfxd):
 				#IR_p_opt = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
 				#From 1024 run
-				IR_p_opt = [0.799831, 0.978818, 0.00773126, 0.337469, 1.02203 ]
+				IR_p_opt = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
 			else:
 				#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
 				#fmin best
-				IR_p_opt = [16.0895,   0.999978,  0.00714617,  0.358507,  0.914976]
-			V_p_opt = [IR_p_opt[4], t0/yr2sec, tfb/yr2sec, gam]
-		if (Fit==True and Fit_IR==False):
+				IR_p_opt = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
+			V_p_opt = [LVbnd, t0/yr2sec, tfb/yr2sec, gam]
+		if (Fit==True and Fit_IR==False and Fit_Src==True):
 			#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
 			if (Rfxd):
 				IR_p_opt = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
 			else:
 				IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
-		if (Fit==True and Fit_Src==False):
-			V_p_opt = [IR_p_opt[4], t0/yr2sec, tfb/yr2sec, gam]
+		if (Fit==True and Fit_Src==False and Fit_IR==True):
+			V_p_opt = [LVbnd, t0/yr2sec, tfb/yr2sec, gam]
 	else:
-		V_p_opt = [IR_p_opt[4], t0/yr2sec, tfb/yr2sec, gam]
+		V_p_opt = [LVbnd, t0/yr2sec, tfb/yr2sec, gam]
 
 	FsrcI1 = np.zeros(Nt)
 	FVplus = np.zeros(Nt)
@@ -728,8 +730,8 @@ if (Pplot):
 
 	plt.scatter(t_avg/day2sec, F1chk, color='orange')
 
-	st = plt.plot(tt/(tfb)*365., FVtot-3.5, linestyle = '-', color='blue', linewidth=2)
-	s1 = plt.plot(tt/(tfb)*365., FsrcI1-3.5, linestyle = '--', color='black', linewidth=3)
+	st = plt.plot(tt/(yr2sec)*365., FVtot-3.5, linestyle = '-', color='blue', linewidth=2)
+	s1 = plt.plot(tt/(yr2sec)*365., FsrcI1-3.5, linestyle = '--', color='black', linewidth=3)
 
 
 	Vdat   = plt.errorbar(tV_srt/day2sec, V_srt-3.5, yerr=V_sigsrt, linestyle="none", color='blue', alpha=0.2, elinewidth=1.5)
@@ -743,7 +745,7 @@ if (Pplot):
 
 
 
-	IR1 = plt.plot(tt/(tfb)*365., FI1, color='orange', linewidth=3)#color='#1b9e77', linewidth=3)
+	IR1 = plt.plot(tt/yr2sec*365., FI1, color='orange', linewidth=3)#color='#1b9e77', linewidth=3)
 
 	W1dat   = plt.errorbar(t_MJD/day2sec, W1_mag, yerr=W1_sig, linestyle="none", color='orange', alpha=0.5, elinewidth=1.5)
 	W1sct   = plt.scatter(t_MJD/day2sec, W1_mag,   color='orange', alpha=0.5)
@@ -753,7 +755,7 @@ if (Pplot):
 
 
 
-	IR2 = plt.plot(tt/(tfb)*365., FI2, color='red', linewidth=3)#color='#d95f02', linewidth=3)
+	IR2 = plt.plot(tt/yr2sec*365., FI2, color='red', linewidth=3)#color='#d95f02', linewidth=3)
 
 	W2dat   = plt.errorbar(t_MJD/day2sec, W2_mag, yerr=W2_sig, linestyle="none", color='red', alpha=0.5, elinewidth=1.5)
 	W2sct   = plt.scatter(t_MJD/day2sec, W2_mag,  color='red', alpha=0.5)
