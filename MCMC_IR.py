@@ -31,6 +31,7 @@ Pplot = True
 Fit = True
 Fit_fmin = False
 Fit_Src = False
+Src_BF = True
 Fit_IR = True
 Rfxd = True
 
@@ -187,19 +188,21 @@ W2_avsg = np.array(W2_avsg)
 ## SOURCE PROPERTIES
 ##########################
 #BEST FITS:
-# Lav = 10.**45 #erg/s
-# LVbnd = 0.18523108#*10.**45
-# Dst = 0.513*10**9*pc2cm
-# t0 =  0.75866946  * yr2sec
-# tfb = 0.02625009 * yr2sec
-# gam = 1.12948904
+if (Src_BF):
+	Lav = 10.**45 #erg/s
+	LVbnd = 0.18523108#*10.**45
+	Dst = 0.513*10**9*pc2cm
+	t0 =  0.75866946  * yr2sec
+	tfb = 0.02625009 * yr2sec
+	gam = 1.12948904
 #^mcmc beest fit [ 0.18523108,  0.75866946,  0.02625009,  1.12948904]
-Lav = 10.**45 #erg/s
-LVbnd = 0.0387673
-Dst = 0.513*10**9*pc2cm
-t0 =  0.49686742  * yr2sec
-tfb = 0.50811559 * yr2sec
-gam = 1.74163261
+else:
+	Lav = 10.**45 #erg/s
+	LVbnd = 0.0387673
+	Dst = 0.513*10**9*pc2cm
+	t0 =  0.49686742  * yr2sec
+	tfb = 0.50811559 * yr2sec
+	gam = 1.74163261
 #^restricting tfb min to be 0.5 [ 0.0387673 ,  0.49686742,  0.50811559,  1.74163261]
 
 ## TEST VALUES
@@ -286,11 +289,14 @@ if (Fit_fmin):
 
 	#arg1 = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne]
 	if (Rfxd):
-		Shell_File = "_FitALLIR_FxdR_Trap80_fmin_"
-		param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} mu\rm{m}\nu_0$", r"$L_{45}$"]
-		#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-		#longer fallback
-		p0IR = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
+		Shell_File = "_FitALLIR_FxdR_Trap%g_fmin_" %Ntrap_nu
+		param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", r"$L_{45}$"]
+		if (Src_BF):
+			#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+			p0IR =[  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00]
+		else:
+			#longer fallback
+			p0IR = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
 		IR_p0 = np.array(p0IR)
 		#p0IR = [0.229, 0.862, 0.05, 0.147, 18.4891]
 		popt  = sc.optimize.fmin(IRTDE_fxdR_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.0001)[0]
@@ -298,12 +304,16 @@ if (Fit_fmin):
 		
 
 	else:
-		Shell_File = "_FitALLIR_sublR_Trap80_fmin_"
+		Shell_File = "_FitALLIR_sublR_Trap%g_fmin_" %Ntrap_nu
 		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
 		#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-		#p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
-		#longer fallback
-		p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00]
+		if (Src_BF):
+			Shell_File = Shell_File + "_src_BF_"
+			p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
+		else:
+			Shell_File = Shell_File + "_src_longerFB_"
+			#longer fallback
+			p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00]
 		IR_p0 = np.array(p0IR)
 		popt  = sc.optimize.fmin(IRTDE_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.0001)[0]
 
@@ -503,14 +513,18 @@ if (Fit):
 		##fit for Lav, tfb with optical data
 		#arg1 = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne]
 		if (Rfxd):
-			Shell_File = "_FitALLIR_FxdR_Trap80_"
-			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} mu\rm{m}\nu_0$", r"$L_{45}$"]
+			Shell_File = "_FxdR_Trap%g_" %Ntrap_nu
+			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", r"$L_{45}$"]
 			#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-			#fmin best
-			#p0IR = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
-			#p0IR =[  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00]
-			##longer fall back
-			p0IR = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
+			if (Src_BF):
+				Shell_File = Shell_File + "_src_BF_"
+				#fmin best
+				#p0IR = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
+				p0IR =[  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00]
+			else:
+				Shell_File = Shell_File + "_src_longerFB_"
+				##longer fall back
+				p0IR = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
 			ndim = len(p0IR)
 			nwalkers = ndim*6
 
@@ -518,14 +532,18 @@ if (Fit):
 
 
 		else:
-			Shell_File = "_FitALLIR_sublR_Trap80_"
+			Shell_File = "_sublR_Trap%g_" %Ntrap_nu
 			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
 			#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-			#fmin
-			#p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
-			#p0IR = [  1.62162628e+01,   9.94984173e-01,   9.07876972e-03, 9.44932700e-03,   2.70076201e+00]
-			#longer fallback
-			p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00]
+			if (Src_BF):
+				Shell_File = Shell_File + "_src_BF_"
+				#best fit
+				#p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
+				p0IR = [  1.62162628e+01,   9.94984173e-01,   9.07876972e-03, 9.44932700e-03,   2.70076201e+00]
+			else:
+				#longer fallback
+				Shell_File = Shell_File + "_src_longerFB_"
+				p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00]
 			ndim = len(p0IR)
 			nwalkers = ndim*6
 
