@@ -28,13 +28,13 @@ from emcee_Funcs_TDEs import *
 ################################
 ################################
 Pplot = True
-plot_solns = True
+plot_solns = False
 Fit = True
 Fit_fmin = False
 Fit_Src = False
-Src_BF = False
+Src_BF = True
 Fit_IR = True
-Rfxd = True
+Rfxd = False
 
 
 ##multiprocessing
@@ -569,7 +569,7 @@ if (Fit):
 		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 1024#512#4048
+		clen = 512#512#4048
 		IR_pos,_,_ = IR_sampler.run_mcmc(IR_walker_p0 , clen)
 
 
@@ -723,10 +723,12 @@ if (Pplot):
 				IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
 			else:
 				#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
-				#fmin best
+				#fmin src best fit
 				#IR_p_opt =[  1.62162628e+01,   9.94984173e-01,   9.07876972e-03, 9.44932700e-03,   2.70076201e+00]
+				# MCMC src best fit
+				IR_p_opt = [14.4698, 0.9961, 0.2437, 0.2632, 3.5439, sigML]
 				#longer fallback
-				IR_p_opt = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00, sigML]
+				#IR_p_opt = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00, sigML]
 			V_p_opt = [LVbnd, t0/yr2sec, tfb/yr2sec, gam]
 		if (Fit==True and Fit_IR==False and Fit_Src==True):
 			#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
@@ -788,9 +790,9 @@ if (Pplot):
 					merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
 			else:
 				if (Src_BF):
-					IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
-					perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
-					merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
+					IR_p_opt = [14.4698, 0.9961, 0.2437, 0.2632, 3.5439, sigML]
+					perr = [0.8689, -0.0127, -0.0034, -0.0035, 0.0035, 0.0]
+					merr = [0.0093, 0.1769, 0.2438, 0.2617, 0.2791, 0.0]
 				else:
 					IR_p_opt = [18.3576, 0.9341, 0.1489, 0.2763, 1.4683, sigML]
 					perr = [1.9372, -0.0527, 0.4094 , -0.0918, 0.1086, 0.0]

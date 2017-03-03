@@ -13,9 +13,9 @@ import scipy.signal as sgn
 
 
 # ###FOR TRAP INT
-Ntrap_ph = 12
-Ntrap_th = 12
-Ntrap_nu = 12
+Ntrap_ph = 220
+Ntrap_th = 220
+Ntrap_nu = 220
 
 #### INTEGRATION ERROR TOLS
 myrel = 1.e-8
