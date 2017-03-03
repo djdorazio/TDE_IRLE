@@ -212,7 +212,45 @@ def Fsrc_Anl_Fit(t, r, Lavg, tfb, t0, gam, FQfac):
 ####################################################
 ### Compute Dust temperature from Therm Eql
 ####################################################
-def TDust(t,r,thet, ph, args, RHStable, Ttable):
+def TDust(t,r,thet, ph, args, RHStable, Ttable, RHS_mx, RHS_mn):
+	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
+
+	sinth = np.sin(thet)
+	cosJ = np.cos(JJ)
+	sinJ = np.sin(JJ)
+	x = r*sinth*np.cos(ph)
+	y = r*sinth*np.sin(ph)
+	z = r*np.cos(thet)
+	
+	xrot = x*cosJ + z*sinJ
+	zrot = z*cosJ - x*sinJ
+	
+	throt = np.arctan2((xrot*xrot + y*y)**(0.5), zrot)
+	Td = 1.0*r/r  ##T=1 is very small
+
+	if (throt>=thetT and throt<=(ma.pi - thetT) and r>=Rd ):
+		###-----------------###
+		### COMPUTE Fsrc    ###
+		###-----------------###
+		Fsrc = Fsrc_Anl(t, r, Lavg, tfb, t0, gam, FQfac)
+
+		if (Fsrc > RHS_mx or Fsrc <= RHS_mn):
+			Td = 1.
+		else:
+			istar = np.where( Fsrc <= RHStable )[0].min()
+			Td = Ttable[istar]
+
+	return Td
+
+TDust = np.vectorize(TDust, excluded=[4,5,6])
+
+
+
+
+
+
+
+def TDust_old(t,r,thet, ph, args, RHStable, Ttable):
 #TDust(tem, Rd, thet, ph, args, RHStable, Ttable)
 	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
 	#Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
@@ -220,17 +258,21 @@ def TDust(t,r,thet, ph, args, RHStable, Ttable):
 	#Loft = Fsrc_Anl(t, r, Lavg, tfb, t0, FQfac) * 4.*ma.pi*r*r
 	#r = etaR * 0.5 * pc2cm * (Loft/(10.**(46)))**(0.5) ##sublimatin front
 
-	x = r*np.sin(thet)*np.cos(ph)
-	y = r*np.sin(thet)*np.sin(ph)
+
+	sinth = np.sin(thet)
+	cosJ = np.cos(JJ)
+	sinJ = np.sin(JJ)
+	x = r*sinth*np.cos(ph)
+	y = r*sinth*np.sin(ph)
 	z = r*np.cos(thet)
 	
-	xrot = x*np.cos(JJ) + z*np.sin(JJ)
-	zrot = z*np.cos(JJ) - x*np.sin(JJ)
+	xrot = x*cosJ + z*sinJ
+	zrot = z*cosJ - x*sinJ
 	
 	throt = np.arctan2((xrot*xrot + y*y)**(0.5), zrot)
-	Td = 1.0*r/r  ##T=1 is very small
+	#Td = 1.0*r/r  ##T=1 is very small
 
-	if (r>=Rd and throt>=thetT and throt<=(ma.pi - thetT)):
+	if (throt>=thetT and throt<=(ma.pi - thetT) and r>=Rd ):
 		###-----------------###
 		### COMPUTE Fsrc    ###
 		###-----------------###
@@ -241,9 +283,10 @@ def TDust(t,r,thet, ph, args, RHStable, Ttable):
 		###-----------------###
 		### Compute taudust ###
 		###-----------------###
-		Qbar=1. 
+		#Qbar=1. 
 		#if r=Rd, tau is just 0
-		tauDust = ma.pi*aeff*aeff*Qbar*n0/(p-1.)*  Rd *( 1 -  (Rd/r)**(p-1.))
+		#tauDust = ma.pi*aeff*aeff*Qbar*n0/(p-1.)*  Rd *( 1 -  (Rd/r)**(p-1.))
+		
 		### if flux is greater than RHS max at which T > Tsub~1800K, then dust sublimates
 		LHS = Fsrc #* np.exp(-tauDust)
 		# if (type(Fsrc) is np.ndarray):
@@ -251,6 +294,7 @@ def TDust(t,r,thet, ph, args, RHStable, Ttable):
 		# 		LHS = sgn.resample(LHS, len(RHStable))
 		# 	elif (len(Fsrc) < len(RHStable)):
 		# 		RHStable = sgn.resample(RHStable, len(Fsrc))
+		
 		RHS_mx = RHStable[len(RHStable)-1]
 		RHS_mn = RHStable[0]
 
@@ -275,14 +319,14 @@ def TDust(t,r,thet, ph, args, RHStable, Ttable):
 		# 	return res
 
 		if (LHS > RHS_mx or LHS <= RHS_mn):
-			Td = 1.
+			return 1.
 		else:
 			istar = np.where( LHS <= RHStable )[0].min()
-			Td = Ttable[istar]
+			return Ttable[istar]
 
-	return Td
+	return r/r
 
-TDust = np.vectorize(TDust, excluded=[4,5,6])
+TDust_old = np.vectorize(TDust_old, excluded=[4,5,6])
 
 ####################################################
 ### T is analytic when Q_nu=1
@@ -305,7 +349,7 @@ def TDust_Anl(t,r,thet, ph, args):
 	throt = np.arctan2((xrot*xrot + y*y)**(0.5), zrot)
 	Td = 1.*r/r  ##T=1 is very small
 
-	if (r>=Rd and throt>=thetT and throt<=(ma.pi - thetT)):
+	if (throt>=thetT and throt<=(ma.pi - thetT) and r>=Rd ):
 		###-----------------###
 		### COMPUTE Fsrc    ###
 		###-----------------###
@@ -335,7 +379,7 @@ def TDust_Anl(t,r,thet, ph, args):
 ### to optical/UV and Opt Thin to IR
 ####################################################
 
-def Fnuint_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable):
+def Fnuint_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable, RHS_mx, RHS_mn):
 					#	phis[0],thet, nu, t, Dist, Aargs, RHStable, Ttable
 	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
    #[Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, FQfac, t0, etaR, gam]
@@ -345,12 +389,13 @@ def Fnuint_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable):
 ### SETUP COORDS TO INTEGRATE  ###
 ###----------------------------###
 ## retarded time - time light emitted from dust
-	tem = t - Rd/c*(1. - np.sin(thet)*np.cos(ph))
+	sinth = np.sin(thet)
+	tem = t - Rd/c*(1. - sinth*np.cos(ph))
 
 
 
 	# Tdust 
-	Tdust = TDust(tem, Rd, thet, ph,  args, RHStable, Ttable)
+	Tdust = TDust(tem, Rd, thet, ph,  args, RHStable, Ttable, RHS_mx, RHS_mn)
 	#Tdust = TDust_Anl(tem, Rd, thet, ph, args)
 
 
@@ -361,7 +406,7 @@ def Fnuint_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable):
 		Surf_nd = 1./(ma.pi*aeff*aeff)
 		# Rd is the inner edge of the shell
 		fint = Qv(nu, nu0, nn) * 2.*h*nu*nu*nu/(c*c)*1./(np.exp(  h*nu/(kb*Tdust)  ) - 1.)	
-		fint = fint* Rd*Rd* np.sin(thet) * Surf_nd #mult by spherical Jacobian and surface denisty
+		fint = fint* Rd*Rd* sinth * Surf_nd #mult by spherical Jacobian and surface denisty
 
 
 	# pi for uniform emitting dust grain
@@ -370,7 +415,7 @@ def Fnuint_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable):
 
 Fnuint_UVthick_IRThin_Iso = np.vectorize(Fnuint_UVthick_IRThin_Iso, excluded=[5,6,7])
 
-def Fnuint_fxdR_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable):
+def Fnuint_fxdR_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable, RHS_mx, RHS_mn):
 	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
   #[Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne, FQfac, t0, etaR, gam]
 
@@ -380,12 +425,13 @@ def Fnuint_fxdR_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable
 ### SETUP COORDS TO INTEGRATE  ###
 ###----------------------------###
 ## retarded time - time light emitted from dust
-	tem = t - Rd/c*(1. - np.sin(thet)*np.cos(ph))
+	sinth = np.sin(thet)
+	tem = t - Rd/c*(1. - sinth*np.cos(ph))
 
 
 
 	# Tdust 
-	Tdust = TDust(tem, Rd, thet, ph, args, RHStable, Ttable)
+	Tdust = TDust(tem, Rd, thet, ph, args, RHStable, Ttable, RHS_mx, RHS_mn)
 	#Tdust = TDust_Anl(tem, Rd, thet, ph, args)
 
 
@@ -396,7 +442,7 @@ def Fnuint_fxdR_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable
 		Surf_nd = 1./(ma.pi*aeff*aeff)
 		# Rd is the inner edge of the shell
 		fint = Qv(nu, nu0, nn) * 2.*h*nu*nu*nu/(c*c)*1./(np.exp(  h*nu/(kb*Tdust)  ) - 1.)	
-		fint = fint* Rd*Rd* np.sin(thet) * Surf_nd #mult by spherical Jacobian and surface denisty
+		fint = fint* Rd*Rd* sinth * Surf_nd #mult by spherical Jacobian and surface denisty
 
 
 	# pi for uniform emitting dust grain
@@ -533,39 +579,39 @@ def Fnuint_OptThin_IRThin_Iso(ph, thet, r, nu, t, Dist, args, RHStable, Ttable):
 
 
 ### My own Trap Rule
-def FThnu_UVthick_IRThin_QuadInt(thet, nu, t, Dist, Aargs, RHStable, Ttable):
+def FThnu_UVthick_IRThin_QuadInt(thet, nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn):
 	phis = np.linspace(0.0,2.*ma.pi, Ntrap_ph)
-	Trap_sub = Fnuint_UVthick_IRThin_Iso(phis[0],thet, nu, t, Dist, Aargs, RHStable, Ttable) + Fnuint_UVthick_IRThin_Iso(phis[Ntrap_ph-1],thet, nu, t, Dist, Aargs, RHStable, Ttable)
-	Trap_int = -Trap_sub +  np.sum(2.*Fnuint_UVthick_IRThin_Iso(phis,thet, nu, t, Dist, Aargs, RHStable, Ttable)) 
+	Trap_sub = Fnuint_UVthick_IRThin_Iso(phis[0],thet, nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) + Fnuint_UVthick_IRThin_Iso(phis[Ntrap_ph-1],thet, nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn)
+	Trap_int = -Trap_sub +  np.sum(2.*Fnuint_UVthick_IRThin_Iso(phis,thet, nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn)) 
 	#for i in range(1,Ntrap_ph-1):
 	#	Trap_int += 2.*Fnuint_UVthick_IRThin_Iso(phis[i],thet, nu, t, Dist, Aargs, RHStable, Ttable) 
 	return 2.*ma.pi/(2.*Ntrap_ph) * (Trap_int)
 
 #FThnu_UVthick_IRThin_QuadInt = np.vectorize(FThnu_UVthick_IRThin_QuadInt, excluded=[4,5,6])
 	
-def Fnu_UVthick_IRThin_QuadInt(nu, t, Dist, Aargs, RHStable, Ttable):
+def Fnu_UVthick_IRThin_QuadInt(nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn):
 	ths = np.linspace(0.0, ma.pi, Ntrap_th)
-	Trap_sub = FThnu_UVthick_IRThin_QuadInt(ths[0], nu, t, Dist, Aargs, RHStable, Ttable) + FThnu_UVthick_IRThin_QuadInt(ths[Ntrap_th-1], nu, t, Dist, Aargs, RHStable, Ttable) 
-	Trap_int = -Trap_sub + np.sum(2.*FThnu_UVthick_IRThin_QuadInt(ths, nu, t, Dist, Aargs, RHStable, Ttable) )
+	Trap_sub = FThnu_UVthick_IRThin_QuadInt(ths[0], nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) + FThnu_UVthick_IRThin_QuadInt(ths[Ntrap_th-1], nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) 
+	Trap_int = -Trap_sub + sum(2.*FThnu_UVthick_IRThin_QuadInt(ths, nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) )
 	#for i in range(1, Ntrap_th-1):
 	#	Trap_int += 2.*FThnu_UVthick_IRThin_QuadInt(ths[i], nu, t, Dist, Aargs, RHStable, Ttable) 
 	return ma.pi/(2.*Ntrap_th) * (Trap_int)
 
 #Fnu_UVthick_IRThin_QuadInt = np.vectorize(Fnu_UVthick_IRThin_QuadInt, excluded=[3,4,5])
 
-def F_ShTorOptThin_Iso_QuadInt(numin, numax, t, Dist, Aargs, RHStable, Ttable):
+def F_ShTorOptThin_Iso_QuadInt(numin, numax, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn,):
 	nus = np.linspace(numin, numax, Ntrap_nu)
 	if (type(t) is float or type(t) is np.float64):
-		Trap_sub = Fnu_UVthick_IRThin_QuadInt(nus[0], t, Dist, Aargs, RHStable, Ttable) + Fnu_UVthick_IRThin_QuadInt(nus[Ntrap_nu-1], t, Dist, Aargs, RHStable, Ttable) 
-		Trap_int = -Trap_sub + np.sum(2.*Fnu_UVthick_IRThin_QuadInt(nus, t, Dist, Aargs, RHStable, Ttable) )
+		Trap_sub = Fnu_UVthick_IRThin_QuadInt(nus[0], t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) + Fnu_UVthick_IRThin_QuadInt(nus[Ntrap_nu-1], t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) 
+		Trap_int = -Trap_sub + sum(2.*Fnu_UVthick_IRThin_QuadInt(nus, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) )
 		#for i in range(1,Ntrap_nu-1):
 		#	Trap_int += 2.*Fnu_UVthick_IRThin_QuadInt(nus[i], t, Dist, Aargs, RHStable, Ttable) 
 		return (numax-numin)/(2.*Ntrap_nu) * (Trap_int)
 	else:
 		res = []
 		for i in range(len(t)):
-			Trap_sub = Fnu_UVthick_IRThin_QuadInt(nus[0], t[i], Dist, Aargs, RHStable, Ttable) + Fnu_UVthick_IRThin_QuadInt(nus[Ntrap_nu-1], t[i], Dist, Aargs, RHStable, Ttable) 
-			Trap_int = -Trap_sub + np.sum(2.*Fnu_UVthick_IRThin_QuadInt(nus, t[i], Dist, Aargs, RHStable, Ttable) )
+			Trap_sub = Fnu_UVthick_IRThin_QuadInt(nus[0], t[i], Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) + Fnu_UVthick_IRThin_QuadInt(nus[Ntrap_nu-1], t[i], Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) 
+			Trap_int = -Trap_sub + sum(2.*Fnu_UVthick_IRThin_QuadInt(nus, t[i], Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) )
 			#for i in range(1,Ntrap_nu-1):
 			#	Trap_int += 2.*Fnu_UVthick_IRThin_QuadInt(nus[i], t[i], Dist, Aargs, RHStable, Ttable) 
 			res.append((numax-numin)/(2.*Ntrap_nu) * (Trap_int))
@@ -576,39 +622,39 @@ def F_ShTorOptThin_Iso_QuadInt(numin, numax, t, Dist, Aargs, RHStable, Ttable):
 
 
 ##FOR FIXED Rsub
-def FThnu_fxdR_UVthick_IRThin_QuadInt(thet, nu, t, Dist, Aargs, RHStable, Ttable):
+def FThnu_fxdR_UVthick_IRThin_QuadInt(thet, nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn):
 	phis = np.linspace(0.0,2.*ma.pi, Ntrap_ph)
-	Trap_sub = Fnuint_fxdR_UVthick_IRThin_Iso(phis[0],thet, nu, t, Dist, Aargs, RHStable, Ttable) + Fnuint_fxdR_UVthick_IRThin_Iso(phis[Ntrap_ph-1],thet, nu, t, Dist, Aargs, RHStable, Ttable)
-	Trap_int = -Trap_sub +  np.sum(2.*Fnuint_fxdR_UVthick_IRThin_Iso(phis,thet, nu, t, Dist, Aargs, RHStable, Ttable)) 
+	Trap_sub = Fnuint_fxdR_UVthick_IRThin_Iso(phis[0],thet, nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) + Fnuint_fxdR_UVthick_IRThin_Iso(phis[Ntrap_ph-1],thet, nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn)
+	Trap_int = -Trap_sub +  sum(2.*Fnuint_fxdR_UVthick_IRThin_Iso(phis,thet, nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn)) 
 	#for i in range(1,Ntrap_ph-1):
 	#	Trap_int += 2.*Fnuint_UVthick_IRThin_Iso(phis[i],thet, nu, t, Dist, Aargs, RHStable, Ttable) 
 	return 2.*ma.pi/(2.*Ntrap_ph) * (Trap_int)
 
 #FThnu_UVthick_IRThin_QuadInt = np.vectorize(FThnu_UVthick_IRThin_QuadInt, excluded=[4,5,6])
 	
-def Fnu_fxdR_UVthick_IRThin_QuadInt(nu, t, Dist, Aargs, RHStable, Ttable):
+def Fnu_fxdR_UVthick_IRThin_QuadInt(nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn,):
 	ths = np.linspace(0.0, ma.pi, Ntrap_th)
-	Trap_sub = FThnu_fxdR_UVthick_IRThin_QuadInt(ths[0], nu, t, Dist, Aargs, RHStable, Ttable) + FThnu_fxdR_UVthick_IRThin_QuadInt(ths[Ntrap_th-1], nu, t, Dist, Aargs, RHStable, Ttable) 
-	Trap_int = -Trap_sub + np.sum(2.*FThnu_fxdR_UVthick_IRThin_QuadInt(ths, nu, t, Dist, Aargs, RHStable, Ttable) )
+	Trap_sub = FThnu_fxdR_UVthick_IRThin_QuadInt(ths[0], nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) + FThnu_fxdR_UVthick_IRThin_QuadInt(ths[Ntrap_th-1], nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) 
+	Trap_int = -Trap_sub + sum(2.*FThnu_fxdR_UVthick_IRThin_QuadInt(ths, nu, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) )
 	#for i in range(1, Ntrap_th-1):
 	#	Trap_int += 2.*FThnu_UVthick_IRThin_QuadInt(ths[i], nu, t, Dist, Aargs, RHStable, Ttable) 
 	return ma.pi/(2.*Ntrap_th) * (Trap_int)
 
 #Fnu_UVthick_IRThin_QuadInt = np.vectorize(Fnu_UVthick_IRThin_QuadInt, excluded=[3,4,5])
 
-def F_fxdR_ShTorOptThin_Iso_QuadInt(numin, numax, t, Dist, Aargs, RHStable, Ttable):
+def F_fxdR_ShTorOptThin_Iso_QuadInt(numin, numax, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn,):
 	nus = np.linspace(numin, numax, Ntrap_nu)
 	if (type(t) is float or type(t) is np.float64):
-		Trap_sub = Fnu_fxdR_UVthick_IRThin_QuadInt(nus[0], t, Dist, Aargs, RHStable, Ttable) + Fnu_fxdR_UVthick_IRThin_QuadInt(nus[Ntrap_nu-1], t, Dist, Aargs, RHStable, Ttable) 
-		Trap_int = -Trap_sub + np.sum(2.*Fnu_fxdR_UVthick_IRThin_QuadInt(nus, t, Dist, Aargs, RHStable, Ttable) )
+		Trap_sub = Fnu_fxdR_UVthick_IRThin_QuadInt(nus[0], t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) + Fnu_fxdR_UVthick_IRThin_QuadInt(nus[Ntrap_nu-1], t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) 
+		Trap_int = -Trap_sub + sum(2.*Fnu_fxdR_UVthick_IRThin_QuadInt(nus, t, Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) )
 		#for i in range(1,Ntrap_nu-1):
 		#	Trap_int += 2.*Fnu_UVthick_IRThin_QuadInt(nus[i], t, Dist, Aargs, RHStable, Ttable) 
 		return (numax-numin)/(2.*Ntrap_nu) * (Trap_int)
 	else:
 		res = []
 		for i in range(len(t)):
-			Trap_sub = Fnu_fxdR_UVthick_IRThin_QuadInt(nus[0], t[i], Dist, Aargs, RHStable, Ttable) + Fnu_fxdR_UVthick_IRThin_QuadInt(nus[Ntrap_nu-1], t[i], Dist, Aargs, RHStable, Ttable) 
-			Trap_int = -Trap_sub + np.sum(2.*Fnu_fxdR_UVthick_IRThin_QuadInt(nus, t[i], Dist, Aargs, RHStable, Ttable) )
+			Trap_sub = Fnu_fxdR_UVthick_IRThin_QuadInt(nus[0], t[i], Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) + Fnu_fxdR_UVthick_IRThin_QuadInt(nus[Ntrap_nu-1], t[i], Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) 
+			Trap_int = -Trap_sub + sum(2.*Fnu_fxdR_UVthick_IRThin_QuadInt(nus, t[i], Dist, Aargs, RHStable, Ttable, RHS_mx, RHS_mn) )
 			#for i in range(1,Ntrap_nu-1):
 			#	Trap_int += 2.*Fnu_UVthick_IRThin_QuadInt(nus[i], t[i], Dist, Aargs, RHStable, Ttable) 
 			res.append((numax-numin)/(2.*Ntrap_nu) * (Trap_int))
