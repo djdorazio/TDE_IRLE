@@ -522,7 +522,7 @@ if (Fit):
 		##fit for Lav, tfb with optical data
 		#arg1 = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne]
 		if (Rfxd):
-			Shell_File = "_FxdR_Trap%g_" %Ntrap_nu
+			Shell_File = "_FxdR_Trap%g_MaxLik_" %Ntrap_nu
 			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", r"$L_{45}$", r"$\sigma_{\rm{ML}}$"]
 			#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
 			if (Src_BF):
@@ -545,7 +545,7 @@ if (Fit):
 
 
 		else:
-			Shell_File = "_sublR_Trap%g_" %Ntrap_nu
+			Shell_File = "_sublR_Trap%g_MaxLik_" %Ntrap_nu
 			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$", r"$\sigma_{\rm{ML}}$"]
 			#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
 			if (Src_BF):
