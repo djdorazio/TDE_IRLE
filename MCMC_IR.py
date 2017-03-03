@@ -34,7 +34,7 @@ Fit_fmin = False
 Fit_Src = False
 Src_BF = False
 Fit_IR = True
-Rfxd = False
+Rfxd = True
 
 
 ##multiprocessing
@@ -663,11 +663,12 @@ if (Fit):
 		target = open(filename, 'w')
 		target.truncate()
 
-
+		IR_diff_minus = np.zeros(len(param_names))
+		IR_diff_plus  = np.zeros(len(param_names))
 		for i,name in enumerate(param_names):
-			IR_diff_minus = IR_MAP_vals[i] - IR_perc[0,i]
-			IR_diff_plus = IR_perc[1,i] - IR_MAP_vals[i]
-			target.write("TDE_IR: {name}: {0:.4f} + {1:.4f} - {2:.4f}".format(IR_MAP_vals[i], IR_diff_plus, IR_diff_minus, name=name))
+			IR_diff_minus[i] = IR_MAP_vals[i] - IR_perc[0,i]
+			IR_diff_plus[i] = IR_perc[1,i] - IR_MAP_vals[i]
+			target.write("TDE_IR: {name}: {0:.4f} + {1:.4f} - {2:.4f}".format(IR_MAP_vals[i], IR_diff_plus[i], IR_diff_minus[i], name=name))
 			target.write("\n")
 
 
@@ -768,34 +769,37 @@ if (Pplot):
 	# 		F1chk[i]  = min(IRLC_point(IR_p_opt, t_avg[i], argW1, RHS_table, T_table), 12.9)
 
 	if (plot_solns):
-
-		if (Rfxd):
-			if (Src_BF):
-				IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
-				perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
-				merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
-			else:
-				IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
-				perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
-				merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
+		Nsolns = 2
+		IR_p_slns = np.zeros([Nsolns, len(IR_p_opt)])
+		FI1_slns = np.zeros([Nsolns, Nt])
+		FI2_slns = np.zeros([Nsolns, Nt])
+		if (Fit):
+			perr = IR_diff_plus
+			merr = IR_diff_minus
 		else:
-			if (Src_BF):
-				IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
-				perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
-				merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
+			if (Rfxd):
+				if (Src_BF):
+					IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+					perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
+					merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
+				else:
+					IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+					perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
+					merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
 			else:
-				IR_p_opt = [18.3576, 0.9341, 0.1489, 0.2763, 1.4683, sigML]
-				perr = [1.9372, -0.0527, 0.4094 , -0.0918, 0.1086, 0.0]
-				merr = [-0.7184, 0.2397, -0.0295, 0.2678, 0.0438, 0.0]
+				if (Src_BF):
+					IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+					perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
+					merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
+				else:
+					IR_p_opt = [18.3576, 0.9341, 0.1489, 0.2763, 1.4683, sigML]
+					perr = [1.9372, -0.0527, 0.4094 , -0.0918, 0.1086, 0.0]
+					merr = [-0.7184, 0.2397, -0.0295, 0.2678, 0.0438, 0.0]
 
 		IR_p_opt = np.array(IR_p_opt)
 		perr = np.array(perr)
 		merr = np.array(merr)
 
-		Nsolns = 2
-		IR_p_slns = np.zeros([Nsolns, len(IR_p_opt)])
-		FI1_slns = np.zeros([Nsolns, Nt])
-		FI2_slns = np.zeros([Nsolns, Nt])
 		IR_p_slns[0] = IR_p_opt - merr
 		IR_p_slns[1] = IR_p_opt + perr
 		for j in range(Nsolns):

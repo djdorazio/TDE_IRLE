@@ -13,14 +13,14 @@ import scipy.signal as sgn
 
 
 # ###FOR TRAP INT
-Ntrap_ph = 120
-Ntrap_th = 120
-Ntrap_nu = 120
+Ntrap_ph = 12
+Ntrap_th = 12
+Ntrap_nu = 12
 
 #### INTEGRATION ERROR TOLS
 myrel = 1.e-8
 myabs = 1.e-8#1.e-60
-reclim = 10#100
+reclim = 50#100
 limlst = 1
 maxp1 = 1
 fo = 1
