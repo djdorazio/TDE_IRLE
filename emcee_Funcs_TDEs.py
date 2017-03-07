@@ -296,9 +296,9 @@ def IRTDE_ML_Err2(p, t, argW1, argW2, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1,
 
 	chi2 = sum(chiW1*chiW1) + sum(chiW2*chiW2) 
 
-	penlty = 0.5 * ( sum( np.log(1./np.sqrt( dy1*dy1 + p[5]*p[5] )) ) + sum( np.log(1./np.sqrt( dy2*dy2 + p[5]*p[5] )) )  )
+	penlty = 0.5 * ( sum( np.log(dy1*dy1 + p[5]*p[5]) ) + sum( np.log(dy2*dy2 + p[5]*p[5]) )  )
 
-	LogLik = chi2 + nn/2. * np.log(2.*ma.pi) + penlty
+	LogLik = chi2/2. + nn/2. * np.log(2.*ma.pi) + penlty
 
 
 	##LogLik i made negative in liklihood function
@@ -324,7 +324,7 @@ def IRTDE_fxdR_ML_Err2(p, t, argW1, argW2, RHStable, Ttable, RHS_mx, RHS_mn, y1,
 
 	chi2 = sum(chiW1*chiW1) + sum(chiW2*chiW2) 
 
-	penlty = 0.5 * ( sum( np.log(1./np.sqrt( dy1*dy1 + p[5]*p[5] )) ) + sum( np.log(1./np.sqrt( dy2*dy2 + p[5]*p[5] )) )  )
+	penlty = 0.5 * ( sum( np.log(dy1*dy1 + p[5]*p[5]) ) + sum( np.log(dy2*dy2 + p[5]*p[5]) )  )
 
 	LogLik = chi2 + nn/2. * np.log(2.*ma.pi) + penlty
 
