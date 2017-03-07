@@ -28,6 +28,8 @@ from emcee_Funcs_TDEs import *
 ### OPTIONS
 ################################
 ################################
+MaxL = True
+
 Pplot = True
 plot_solns = False
 
@@ -281,7 +283,7 @@ argW1 = [FW1Rel, W1mn, W1mx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FW1_gal, gam]
 argW2 = [FW2Rel, W2mn, W2mx, Dst, tfb, n0, pp, aeff, nne, t0, Rde, FW2_gal, gam]
 Varg  = [Dst, FVbndRel, FV_gal]
 
-sigML = 0.01
+sigML = 0.1
 
 
 
@@ -295,38 +297,68 @@ if (Fit_fmin):
 	from scipy.optimize import fmin
 
 
-
+	if (MaxL):
 	#arg1 = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne]
-	if (Rfxd):
-		Shell_File = "_FitALLIR_FxdR_Trap%g_fmin_" %Ntrap_nu
-		param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", r"$L_{45}$", r"$\sigma_{\rm{ML}}$"]
-		if (Src_BF):
-			#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-			p0IR =[  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00, sigML]
-		else:
-			#longer fallback
-			#1024 MCMC fit
-			p0IR = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
-			#p0IR = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
-		IR_p0 = np.array(p0IR)
-		#p0IR = [0.229, 0.862, 0.05, 0.147, 18.4891]
-		popt  = sc.optimize.fmin(IRTDE_fxdR_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.0001)[0]
+		if (Rfxd):
+			Shell_File = "_FitALLIR_FxdR_Trap%g_fminML_" %Ntrap_nu
+			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", r"$L_{45}$", r"$\sigma_{\rm{ML}}$"]
+			if (Src_BF):
+				#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+				p0IR =[  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00, sigML]
+			else:
+				#longer fallback
+				#1024 MCMC fit
+				p0IR = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+				#p0IR = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
+			IR_p0 = np.array(p0IR)
+			#p0IR = [0.229, 0.862, 0.05, 0.147, 18.4891]
+			popt  = sc.optimize.fmin(IRTDE_fxdR_ML_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.0001)[0]
 
-		
+			
+
+		else:
+			Shell_File = "_FitALLIR_sublR_Trap%g_fminML_" %Ntrap_nu
+			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$", r"$\sigma_{\rm{ML}}$"]
+			#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+			if (Src_BF):
+				Shell_File = Shell_File + "_src_BF_"
+				p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784, sigML]
+			else:
+				Shell_File = Shell_File + "_src_longerFB_"
+				#longer fallback
+				p0IR = [  2.01213715e+01,   9.94873454e-01,   6.76740228e-03, 1.71450267e-06,   1.16555735e+00,   1.99141744e-01]
+			IR_p0 = np.array(p0IR)
+			popt  = sc.optimize.fmin(IRTDE_Err2_ML_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.0001)[0]
 
 	else:
-		Shell_File = "_FitALLIR_sublR_Trap%g_fmin_" %Ntrap_nu
-		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$", r"$\sigma_{\rm{ML}}$"]
-		#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-		if (Src_BF):
-			Shell_File = Shell_File + "_src_BF_"
-			p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784, sigML]
+		if (Rfxd):
+			Shell_File = "_FitALLIR_FxdR_Trap%g_fminNOML_" %Ntrap_nu
+			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", r"$L_{45}$"]
+			if (Src_BF):
+				p0IR =[  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00]
+			else:
+				#longer fallback
+				p0IR = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476]
+			IR_p0 = np.array(p0IR)
+			popt  = sc.optimize.fmin(IRTDE_fxdR_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.0001)[0]
+		
 		else:
-			Shell_File = Shell_File + "_src_longerFB_"
-			#longer fallback
-			p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00, sigML]
-		IR_p0 = np.array(p0IR)
-		popt  = sc.optimize.fmin(IRTDE_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.0001)[0]
+			Shell_File = "_FitALLIR_sublR_Trap%g_fmin_" %Ntrap_nu
+			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
+			if (Src_BF):
+				Shell_File = Shell_File + "_src_BF_"
+				p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
+			else:
+				Shell_File = Shell_File + "_src_longerFB_"
+				#longer fallback
+				p0IR = [  2.01213715e+01,   9.94873454e-01,   6.76740228e-03, 1.71450267e-06,   1.16555735e+00]
+			IR_p0 = np.array(p0IR)
+			popt  = sc.optimize.fmin(IRTDE_Err2_fmin,  IR_p0, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg), full_output=1, disp=False, ftol=0.0001)[0]
+
+
+
+
+
 
 
 	IR_p_opt = popt
@@ -538,46 +570,88 @@ if (Fit):
 		##########################
 		##fit for Lav, tfb with optical data
 		#arg1 = [Lav, tfb, n0, Rde, pp, thetTst, JJt, aeff, nu0, nne]
-		if (Rfxd):
-			Shell_File = "_FxdR_Trap%g_MaxLik_" %Ntrap_nu
-			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", r"$L_{45}$", r"$\sigma_{\rm{ML}}$"]
-			#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-			if (Src_BF):
-				Shell_File = Shell_File + "_src_BF_"
-				#fmin best
-				#p0IR = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
-				p0IR =[  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00, sigML]
-			else:
-				Shell_File = Shell_File + "_src_longerFB_"
-				##longer fall back
-				#1024 MCMC
-				p0IR = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
-				perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736]
-				merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329]
-				#p0IR = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
-			ndim = len(p0IR)
-			nwalkers = ndim*5
 
-			IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_fxdR_posterior, threads=NThread, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg))
+		if (MaxL):
+			if (Rfxd):
+				Shell_File = "_FxdR_Trap%g_MaxLik_" %Ntrap_nu
+				param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", r"$L_{45}$", r"$\sigma_{\rm{ML}}$"]
+				#p0IR = [0.8, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+				if (Src_BF):
+					Shell_File = Shell_File + "_src_BF_"
+					#fmin best
+					#p0IR = [0.8149, 1.0, 0.00886, 1.105e-5, 2.13 ]
+					p0IR =[  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00, sigML]
+				else:
+					Shell_File = Shell_File + "_src_longerFB_"
+					##longer fall back
+					#1024 MCMC
+					p0IR = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+					perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736]
+					merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329]
+					#p0IR = [  9.83366786e-01,   7.80424532e-01,   9.05889101e-03, 1.13584010e-05,   1.79596264e+00]
+				ndim = len(p0IR)
+				nwalkers = ndim*5
+
+				IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_fxdR_ML_posterior, threads=NThread, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg))
+
+
+			else:
+				Shell_File = "_sublR_Trap%g_MaxLik_" %Ntrap_nu
+				param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$", r"$\sigma_{\rm{ML}}$"]
+				#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
+				if (Src_BF):
+					Shell_File = Shell_File + "_src_BF_"
+					#best fit
+					#p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
+					p0IR = [  1.62162628e+01,   9.94984173e-01,   9.07876972e-03, 9.44932700e-03,   2.70076201e+00, sigML]
+				else:
+					#longer fallback
+					Shell_File = Shell_File + "_src_longerFB_"
+					p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00, sigML]
+				ndim = len(p0IR)
+				nwalkers = ndim*5
+
+
+				IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_ML_posterior, threads=NThread, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg))
+
 
 
 		else:
-			Shell_File = "_sublR_Trap%g_MaxLik_" %Ntrap_nu
-			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$", r"$\sigma_{\rm{ML}}$"]
-			#p0IR = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, Lav/10.**45]
-			if (Src_BF):
-				Shell_File = Shell_File + "_src_BF_"
-				#best fit
-				#p0IR = [19.371,   0.753721,  0.00895658,  0.0106707,  1.88784]
-				p0IR = [  1.62162628e+01,   9.94984173e-01,   9.07876972e-03, 9.44932700e-03,   2.70076201e+00, sigML]
-			else:
-				#longer fallback
-				Shell_File = Shell_File + "_src_longerFB_"
-				p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00, sigML]
-			ndim = len(p0IR)
-			nwalkers = ndim*5
+			if (Rfxd):
+				Shell_File = "_FxdR_Trap%g_NoML_" %Ntrap_nu
+				param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", r"$L_{45}$"]
+				if (Src_BF):
+					Shell_File = Shell_File + "_src_BF_"
+					p0IR =[  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00]
+				else:
+					Shell_File = Shell_File + "_src_longerFB_"
+					p0IR = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476]
+				ndim = len(p0IR)
+				nwalkers = ndim*5
 
-			IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_posterior, threads=NThread, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg))
+				IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_fxdR_posterior, threads=NThread, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg))
+
+
+			else:
+				Shell_File = "_sublR_Trap%g_NoML_" %Ntrap_nu
+				param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", r"$L_{45}$"]
+				if (Src_BF):
+					Shell_File = Shell_File + "_src_BF_"
+					p0IR = [  1.62162628e+01,   9.94984173e-01,   9.07876972e-03, 9.44932700e-03,   2.70076201e+00]
+				else:
+					#longer fallback
+					Shell_File = Shell_File + "_src_longerFB_"
+					p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00]
+				ndim = len(p0IR)
+				nwalkers = ndim*5
+
+
+
+				IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_posterior, threads=NThread, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg))
+
+
+
+
 
 
 
@@ -586,7 +660,7 @@ if (Fit):
 		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-4, size=(nwalkers, ndim))
 
 					
-		clen = 512#512#4048
+		clen = 512#4048
 		IR_pos,_,_ = IR_sampler.run_mcmc(IR_walker_p0 , clen)
 
 
@@ -739,7 +813,7 @@ if (Fit):
 if (Pplot):
 	### PLOT POINTS
 	print "PLOTTING"
-	Nt=80
+	Nt=40
 	tt = np.linspace(0.00, 12.,       Nt)*yr2sec
 
 	if (Fit_fmin == False):
@@ -751,22 +825,34 @@ if (Pplot):
 				#From 1024 run
 				#IR_p_opt = [  8.16625053e-01,   9.83459365e-01,   7.80853708e-03,  3.60872083e-06,   3.44648331e+00]
 				#longer fallback
-				IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+				if (MaxL):
+					IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+				else:
+					IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476]
 			else:
 				#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), nu0/numicron, 1.0]
 				#fmin src best fit
 				#IR_p_opt =[  1.62162628e+01,   9.94984173e-01,   9.07876972e-03, 9.44932700e-03,   2.70076201e+00]
 				# MCMC src best fit
-				IR_p_opt = [14.4698, 0.9961, 0.2437, 0.2632, 3.5439, sigML]
+				if (MaxL):
+					IR_p_opt = [14.4698, 0.9961, 0.2437, 0.2632, 3.5439, sigML]
+				else:
+					IR_p_opt = [14.4698, 0.9961, 0.2437, 0.2632, 3.5439]
 				#longer fallback
 				#IR_p_opt = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00, sigML]
 			V_p_opt = [LVbnd, t0/yr2sec, tfb/yr2sec, gam]
 		if (Fit==True and Fit_IR==False and Fit_Src==True):
 			#IR_p_opt = [etaR, np.cos(thetTst), np.sin(JJt), 100.0]	
 			if (Rfxd):
-				IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+				if (MaxL):
+					IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+				else:
+					IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476]
 			else:
-				IR_p_opt =[  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00, sigML]
+				if(MaxL):
+					IR_p_opt =[  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00, sigML]
+				else:
+					IR_p_opt =[  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00]
 		if (Fit==True and Fit_Src==False and Fit_IR==True):
 			V_p_opt = [LVbnd, t0/yr2sec, tfb/yr2sec, gam]
 	else:
@@ -784,16 +870,30 @@ if (Pplot):
 	LIRfit = IR_p_opt[4]
 	FsrcI1 = VLC_point(V_p_opt, tt, Varg, LIRfit)
 
-	for i in range(Nt):
-		#FsrcI1[i] = -2.5*np.log10(Fsrc_Anl_Fit(tt[i], Dst, V_p_opt[0], V_p_opt[2], V_p_opt[1], V_p_opt[3], V_p_opt[4]))
-		if (Rfxd):
-			FI1[i]    = min(IRLC_fxdR_point(IR_p_opt, tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
-			FI2[i]    = min(IRLC_fxdR_point(IR_p_opt, tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
-			FVplus[i] = IRLC_fxdR_point(IR_p_opt, tt[i], argVplus, RHS_table, T_table, RHS_mx, RHS_mn)
-		else:
-			FI1[i]    = min(IRLC_point(IR_p_opt, tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
-			FI2[i]    = min(IRLC_point(IR_p_opt, tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
-			FVplus[i] = IRLC_point(IR_p_opt, tt[i], argVplus, RHS_table, T_table, RHS_mx, RHS_mn)
+
+	if (MaxL):
+		for i in range(Nt):
+			#FsrcI1[i] = -2.5*np.log10(Fsrc_Anl_Fit(tt[i], Dst, V_p_opt[0], V_p_opt[2], V_p_opt[1], V_p_opt[3], V_p_opt[4]))
+			if (Rfxd):
+				FI1[i]    = min(IRLC_fxdR_ML_point(IR_p_opt, tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
+				FI2[i]    = min(IRLC_fxdR_ML_point(IR_p_opt, tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
+				FVplus[i] = IRLC_fxdR_ML_point(IR_p_opt, tt[i], argVplus, RHS_table, T_table, RHS_mx, RHS_mn)
+			else:
+				FI1[i]    = min(IRLC_ML_point(IR_p_opt, tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
+				FI2[i]    = min(IRLC_ML_point(IR_p_opt, tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
+				FVplus[i] = IRLC_ML_point(IR_p_opt, tt[i], argVplus, RHS_table, T_table, RHS_mx, RHS_mn)
+
+	else:
+		for i in range(Nt):
+			#FsrcI1[i] = -2.5*np.log10(Fsrc_Anl_Fit(tt[i], Dst, V_p_opt[0], V_p_opt[2], V_p_opt[1], V_p_opt[3], V_p_opt[4]))
+			if (Rfxd):
+				FI1[i]    = min(IRLC_fxdR_point(IR_p_opt, tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
+				FI2[i]    = min(IRLC_fxdR_point(IR_p_opt, tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
+				FVplus[i] = IRLC_fxdR_point(IR_p_opt, tt[i], argVplus, RHS_table, T_table, RHS_mx, RHS_mn)
+			else:
+				FI1[i]    = min(IRLC_point(IR_p_opt, tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
+				FI2[i]    = min(IRLC_point(IR_p_opt, tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
+				FVplus[i] = IRLC_point(IR_p_opt, tt[i], argVplus, RHS_table, T_table, RHS_mx, RHS_mn)
 
 	# for i in range(len(t_avg)):
 	# 	if (Rfxd):
@@ -810,24 +910,45 @@ if (Pplot):
 			perr = IR_diff_plus
 			merr = IR_diff_minus
 		else:
-			if (Rfxd):
-				if (Src_BF):
-					IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
-					perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
-					merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
+			if (MaxL):
+				if (Rfxd):
+					if (Src_BF):
+						IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+						perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
+						merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
+					else:
+						IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
+						perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
+						merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
 				else:
-					IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476, sigML]
-					perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736, 0.0]
-					merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329, 0.0]
+					if (Src_BF):
+						IR_p_opt = [14.4698, 0.9961, 0.2437, 0.2632, 3.5439, sigML]
+						perr = [0.8689, -0.0127, -0.0034, -0.0035, 0.0035, 0.0]
+						merr = [0.0093, 0.1769, 0.2438, 0.2617, 0.2791, 0.0]
+					else:
+						IR_p_opt = [18.3576, 0.9341, 0.1489, 0.2763, 1.4683, sigML]
+						perr = [1.9372, -0.0527, 0.4094 , -0.0918, 0.1086, 0.0]
+						merr = [-0.7184, 0.2397, -0.0295, 0.2678, 0.0438, 0.0]
+
 			else:
-				if (Src_BF):
-					IR_p_opt = [14.4698, 0.9961, 0.2437, 0.2632, 3.5439, sigML]
-					perr = [0.8689, -0.0127, -0.0034, -0.0035, 0.0035, 0.0]
-					merr = [0.0093, 0.1769, 0.2438, 0.2617, 0.2791, 0.0]
+				if (Rfxd):
+					if (Src_BF):
+						IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476]
+						perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736]
+						merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329]
+					else:
+						IR_p_opt = [0.9696, 0.8149, 0.0232, 0.2672, 1.7476]
+						perr = [0.0037, -0.0607, 0.3757, -0.1978, -0.0736]
+						merr = [0.0003, 0.1323, -0.1746, 0.2659, 0.1329]
 				else:
-					IR_p_opt = [18.3576, 0.9341, 0.1489, 0.2763, 1.4683, sigML]
-					perr = [1.9372, -0.0527, 0.4094 , -0.0918, 0.1086, 0.0]
-					merr = [-0.7184, 0.2397, -0.0295, 0.2678, 0.0438, 0.0]
+					if (Src_BF):
+						IR_p_opt = [14.4698, 0.9961, 0.2437, 0.2632, 3.5439]
+						perr = [0.8689, -0.0127, -0.0034, -0.0035, 0.0035]
+						merr = [0.0093, 0.1769, 0.2438, 0.2617, 0.2791]
+					else:
+						IR_p_opt = [18.3576, 0.9341, 0.1489, 0.2763, 1.4683]
+						perr = [1.9372, -0.0527, 0.4094 , -0.0918, 0.1086]
+						merr = [-0.7184, 0.2397, -0.0295, 0.2678, 0.0438]
 
 		IR_p_opt = np.array(IR_p_opt)
 		perr = np.array(perr)
@@ -837,18 +958,27 @@ if (Pplot):
 		IR_p_slns[1] = IR_p_opt + perr
 		for j in range(Nsolns):
 			#IR_p_slns[j] = (IR_p_opt-merr) + j*perr/Nsolns
-			for i in range(Nt):
-				if (Rfxd):
-					FI1_slns[j][i] = min(IRLC_fxdR_point(IR_p_slns[j], tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
-					FI2_slns[j][i]    = min(IRLC_fxdR_point(IR_p_slns[j], tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
-					#FI1_slns[j][i] = IRLC_fxdR_point(IR_p_slns[j], tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn)
-					#FI2_slns[j][i] = IRLC_fxdR_point(IR_p_slns[j], tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn)
-				else:
-					FI1_slns[j][i]    = min(IRLC_point(IR_p_slns[j], tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
-					FI2_slns[j][i]    = min(IRLC_point(IR_p_slns[j], tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
-					#FI1_slns[j][i]    = IRLC_point(IR_p_slns[j], tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn)
-					#FI2_slns[j][i]    = IRLC_point(IR_p_slns[j], tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn)
-
+			if (MaxL):
+				for i in range(Nt):
+					if (Rfxd):
+						FI1_slns[j][i] = min(IRLC_fxdR_ML_point(IR_p_slns[j], tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
+						FI2_slns[j][i]    = min(IRLC_fxdR_ML_point(IR_p_slns[j], tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
+						#FI1_slns[j][i] = IRLC_fxdR_point(IR_p_slns[j], tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn)
+						#FI2_slns[j][i] = IRLC_fxdR_point(IR_p_slns[j], tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn)
+					else:
+						FI1_slns[j][i]    = min(IRLC_ML_point(IR_p_slns[j], tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
+						FI2_slns[j][i]    = min(IRLC_ML_point(IR_p_slns[j], tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
+						#FI1_slns[j][i]    = IRLC_point(IR_p_slns[j], tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn)
+						#FI2_slns[j][i]    = IRLC_point(IR_p_slns[j], tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn)
+			else:
+				for i in range(Nt):
+					if (Rfxd):
+						FI1_slns[j][i] = min(IRLC_fxdR_point(IR_p_slns[j], tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
+						FI2_slns[j][i]    = min(IRLC_fxdR_point(IR_p_slns[j], tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
+					else:
+						FI1_slns[j][i]    = min(IRLC_point(IR_p_slns[j], tt[i], argW1, RHS_table, T_table, RHS_mx, RHS_mn), 12.9)
+						FI2_slns[j][i]    = min(IRLC_point(IR_p_slns[j], tt[i], argW2, RHS_table, T_table, RHS_mx, RHS_mn), 11.26)
+													
 
 
 
@@ -920,14 +1050,14 @@ if (Pplot):
 
 	if (Fit):
 		if (Rfxd):
-			Savename = "plots/Testmin"+Shell_File+"TDE_Rfxd_AnalySrc_BestFits_NTrap%gtfb%g_clen%g_%gwalkers.png" %(Ntrap_nu,tfb,clen,nwalkers)
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rfxd_AnalySrc_NTrap%gtfb%g_clen%g_%gwalkers.png" %(Ntrap_nu,tfb,clen,nwalkers)
 		else:
-			Savename = "plots/Testmin"+Shell_File+"TDE_Rsubl_AnalySrc_BestFits_NTrap%gtfb%g_clen%g_%gwalkers.png" %(Ntrap_nu,tfb,clen,nwalkers)
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rsubl_AnalySrc_NTrap%gtfb%g_clen%g_%gwalkers.png" %(Ntrap_nu,tfb,clen,nwalkers)
 	else:
 		if (Rfxd):
-			Savename = "plots/Testmin"+Shell_File+"TDE_Rfxd_AnalySrc_BestFits_NTrap%g_tfb%g.png" %(Ntrap_nu, tfb)
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rfxd_AnalySrc_NTrap%g_tfb%g.png" %(Ntrap_nu, tfb)
 		else:
-			Savename = "plots/Testmin"+Shell_File+"TDE_Rsubl_AnalySrc_BestFits_NTrap%gtfb%g.png" %(Ntrap_nu, tfb)
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rsubl_AnalySrc_NTrap%gtfb%g.png" %(Ntrap_nu, tfb)
 	Savename = Savename.replace('.', 'p')
 	Savename = Savename.replace('ppng', '.png')
 	plt.savefig(Savename)
