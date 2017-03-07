@@ -38,7 +38,7 @@ def ln_V_prior(params):
 	if t0 < 0.0 or t0 > 2.0: ##dont shift more than 4 years
 		return -np.inf
 					
-	if tfb < 0.5 or tfb > 5.:
+	if tfb < 0.0 or tfb > 5.:
 		return -np.inf
 
 	if gam < 0.1 or gam > 4.0:
@@ -98,7 +98,7 @@ def IRLC_fxdR_point(p, t, args, RHStable, Ttable, RHS_mx, RHS_mn):
 
 
 def IRTDE_Err2(p, t, argW1, argW2, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2):
-	#print "EVAL", p
+	print "EVAL", p
 	
 	chiW1 = 0.5*( y1 - np.minimum(IRLC_point(p, t, argW1, RHStable, Ttable, RHS_mx, RHS_mn), 12.9)  )/ np.sqrt( dy1*dy1 + p[5]*p[5]  )
 
@@ -113,7 +113,7 @@ def IRTDE_Err2(p, t, argW1, argW2, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2
 	# print "chiW2 = ", chiW2
 
 	chi2 = sum(chiW1*chiW1) + sum(chiW2*chiW2) 
-	#print(chi2)
+	print(chi2)
 	return chi2
 
 
@@ -129,7 +129,7 @@ def IRTDE_Err2_fmin(p, t, argW1, argW2, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy
 
 
 def IRTDE_fxdR_Err2(p, t, argW1, argW2, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2):
-	#print "EVAL", p
+	print "EVAL", p
 	
 	chiW1 = 0.5*(  y1 - np.minimum(IRLC_fxdR_point(p, t, argW1, RHStable, Ttable, RHS_mx, RHS_mn), 12.9)   )/ np.sqrt( dy1*dy1 + p[5]*p[5] )
 
@@ -144,7 +144,7 @@ def IRTDE_fxdR_Err2(p, t, argW1, argW2, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy
 	# print "chiW2 = ", chiW2
 
 	chi2 = sum(chiW1*chiW1) + sum(chiW2*chiW2) 
-	#print(chi2)
+	print(chi2)
 	return chi2
 
 

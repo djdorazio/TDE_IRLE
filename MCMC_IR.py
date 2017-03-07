@@ -5,6 +5,7 @@ import scipy as sc
 from scipy import *
 
 import emcee
+#from emcee.utils import MPIPool
 
 import matplotlib
 matplotlib.use('Agg')
@@ -29,16 +30,20 @@ from emcee_Funcs_TDEs import *
 ################################
 Pplot = True
 plot_solns = False
+
 Fit = True
 Fit_fmin = False
+
 Fit_Src = False
-Src_BF = True
 Fit_IR = True
+
+Src_BF = False
 Rfxd = False
 
 
 ##multiprocessing
-NThread = 6
+NThread = 30
+#pool = MPIPool(loadbalance=True)
 
 
 ##Trim beginning of Vband
@@ -361,9 +366,9 @@ if (Fit):
 		param_names = [r"$L_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$"]
 		p0V = [LVbnd, t0/yr2sec, tfb/yr2sec, gam]
 		ndim = len(p0V)
-		nwalkers = ndim*8
+		nwalkers = ndim*4
 		#V_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_V_posterior, threads=NThread,args=(tV_srt, Varg, V_srt, V_sigsrt))
-		V_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_V_posterior, threads=NThread,args=(tV_avg, Varg, V_avg, V_avsg))
+		V_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_V_posterior, threads=NThread, args=(tV_avg, Varg, V_avg, V_avsg))
 
 
 
@@ -373,7 +378,7 @@ if (Fit):
 		V_walker_p0 = np.random.normal(V_p0, np.abs(V_p0)*1E-3, size=(nwalkers, ndim))
 
 					
-		clen = 4096
+		clen = 512
 		#for ():
 		#run as iterable
 		#acor function
@@ -395,7 +400,7 @@ if (Fit):
 
 
 
-
+		#V_acor = V_sampler.acor
 
 		V_flatchain = np.vstack(V_chain[:,clen/4:])
 		V_flatlnprobs = np.vstack(V_lnprobs[:,clen/4:])
@@ -405,7 +410,19 @@ if (Fit):
 
 
 
+		##record final state for restart
+		f_rstrt = open("Restart/Rstrt"+Shell_File+"chain.txt", "w")
+		f_rstrt.close()
 
+		for result in V_sampler.sample(V_pos, iterations=1, storechain=False):
+		    position = result[0]
+		    f_rstrt = open("Restart/Rstrt"+Shell_File+"chain.txt", "a")
+		    for k in range(position.shape[0]):
+		    	#print k
+		    	f_rstrt.write("%i  %g %g %g %g" %(k, position[k][0], position[k][1], position[k][2], position[k][3]))
+		    	f_rstrt.write("\n")
+		        #f_rstrt.write("{0:4d} {1:s}\n".format(k, " ".join(position[k])))
+		    f_rstrt.close()
 
 
 
@@ -541,7 +558,7 @@ if (Fit):
 			ndim = len(p0IR)
 			nwalkers = ndim*5
 
-			IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_fxdR_posterior, threads=NThread,args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg))
+			IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_fxdR_posterior, threads=NThread, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg))
 
 
 		else:
@@ -558,15 +575,15 @@ if (Fit):
 				Shell_File = Shell_File + "_src_longerFB_"
 				p0IR = [  1.92818999e+01,   8.74318091e-01,   1.07231518e-02, 9.81932600e-03,   1.65353712e+00, sigML]
 			ndim = len(p0IR)
-			nwalkers = ndim*6
+			nwalkers = ndim*5
 
-			IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_posterior, threads=NThread,args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg))
+			IR_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_posterior, threads=NThread, args=(t_avg, argW1, argW2, RHS_table, T_table, RHS_mx, RHS_mn, W1_avg, W1_avsg, W2_avg, W2_avsg))
 
 
 
 		IR_p0 = np.array(p0IR)
 
-		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-3, size=(nwalkers, ndim))
+		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-4, size=(nwalkers, ndim))
 
 					
 		clen = 512#512#4048
@@ -580,6 +597,20 @@ if (Fit):
 
 
 				
+		### SAAVE END STATE to RESTART (IR_pos)
+		f_rstrt = open("Restart/Rstrt"+Shell_File+"chain.txt", "w")
+		f_rstrt.close()
+
+		for result in IR_sampler.sample(IR_pos, iterations=1, storechain=False):
+		    position = result[0]
+		    f_rstrt = open("Restart/Rstrt"+Shell_File+"chain.txt", "a")
+		    for k in range(position.shape[0]):
+		    	#print k
+		    	f_rstrt.write("%i  %g %g %g %g" %(k, position[k][0], position[k][1], position[k][2], position[k][3]))
+		    	f_rstrt.write("\n")
+		        #f_rstrt.write("{0:4d} {1:s}\n".format(k, " ".join(position[k])))
+		    f_rstrt.close()
+
 
 
 		### OPEN OUTPUT DATA
@@ -588,7 +619,7 @@ if (Fit):
 
 
 
-
+		#IR_acor  = IR_sampler.acor
 
 		IR_flatchain = np.vstack(IR_chain[:,clen/2:])
 		IR_flatlnprobs = np.vstack(IR_lnprobs[:,clen/2:])
