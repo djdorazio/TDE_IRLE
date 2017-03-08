@@ -234,7 +234,7 @@ def ln_IR_ML_prior(params):
 	if (Lav > 100.0 or Lav <= 0.0001):
 	 	return -np.inf
 
-	if sigML < -0.1:
+	if sigML < 0.0:
 	 	return -np.inf	
 			
 	return 0.
