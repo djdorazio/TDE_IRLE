@@ -29,6 +29,8 @@ from emcee_Funcs_TDEs import *
 ################################
 ################################
 MaxL = True
+Rstrt = False
+#RstrtFile = "Restart/Rstrt_sublR_Trap10_MaxLik__src_longerFB_chain.txt"
 
 Pplot = True
 plot_solns = False
@@ -652,15 +654,22 @@ if (Fit):
 
 
 
+		if (Rstrt):
+			##define walker init from file
+			RstrtFile = "Restart/Rstrt"+Shell_File+"chain.txt"
+			print "Restarting from File "+RstrtFile 
+			in0 = np.zeros([ndim, nwalkers])
+			for i in range(0, len(param_names)):
+				in0[i] = np.array(np.genfromtxt(RstrtFile, usecols=i+1, comments='$'))
 
+			IR_walker_p0 = np.transpose(in0)
+		else:
+			IR_p0 = np.array(p0IR)
 
-
-		IR_p0 = np.array(p0IR)
-
-		IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-4, size=(nwalkers, ndim))
+			IR_walker_p0 = np.random.normal(IR_p0, np.abs(IR_p0)*1E-4, size=(nwalkers, ndim))
 
 					
-		clen = 512#4048
+		clen = 1024#4048
 		IR_pos,_,_ = IR_sampler.run_mcmc(IR_walker_p0 , clen)
 
 
@@ -678,9 +687,13 @@ if (Fit):
 		for result in IR_sampler.sample(IR_pos, iterations=1, storechain=False):
 		    position = result[0]
 		    f_rstrt = open("Restart/Rstrt"+Shell_File+"chain.txt", "a")
+		    f_rstrt.write(" ".join(param_names))
+		    f_rstrt.write("\n")
 		    for k in range(position.shape[0]):
 		    	#print k
-		    	f_rstrt.write("%i  %g %g %g %g" %(k, position[k][0], position[k][1], position[k][2], position[k][3]))
+		    	f_rstrt.write("%i " %k)
+		    	for i in range(len(param_names)):
+		    		f_rstrt.write(" %g " %position[k][i])
 		    	f_rstrt.write("\n")
 		        #f_rstrt.write("{0:4d} {1:s}\n".format(k, " ".join(position[k])))
 		    f_rstrt.close()
