@@ -8,6 +8,132 @@ from FluxFuncs_TDEs import *
 
 
 
+############################
+## MAX LIK FNS for Simul FIT of W1 W2 and V0bands
+############################
+#PRIORS
+
+
+
+##ERR2 FUNCS (-LogLik now)
+def IRTDE_ALL_Err2(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb):
+	print "EVAL", p
+
+	pIR = [p[0], p[1], p[2], p[3], p[4], p[5]]
+	pVb = [p[6], p[7], p[8], p[9]]
+
+	nn = 2.*len(t) + len(tVb)
+	
+	chiW1 = 0.5*( y1 - np.minimum(IRLC_ML_point(pIR, t, argW1, RHStable, Ttable, RHS_mx, RHS_mn), 12.9)  )/ np.sqrt( dy1*dy1 + p[5]*p[5]  )
+
+	chiW2 = 0.5*( y2 - np.minimum(IRLC_ML_point(pIR, t, argW2, RHStable, Ttable, RHS_mx, RHS_mn), 11.26) )/ np.sqrt( dy2*dy2 + p[5]*p[5]  )
+
+	chiVb = 0.5*(yVb - np.minimum(VLC_point(pVb, tVb, argVb, 1.0),17.6) )/  np.sqrt( dyVb*dyVb + p[5]*p[5]  )
+
+
+
+	# print "chiW1^2 = ", sum(chiW1*chiW1)
+
+	# print "chiW1 = ", chiW1
+
+	# print "chiW2^2 = ", sum(chiW2*chiW2) 
+
+	# print "chiW2 = ", chiW2
+
+	chi2 = sum(chiW1*chiW1) + sum(chiW2*chiW2) + sum(chiVb*chiVb)
+
+	penlty = 0.5 * ( sum( np.log(dy1*dy1 + p[5]*p[5]) ) + sum( np.log(dy2*dy2 + p[5]*p[5]) ) + sum( np.log(dyVb*dyVb + p[5]*p[5]) )  )
+
+	LogLik = chi2/2. + nn/2. * np.log(2.*ma.pi) + penlty
+
+
+	##LogLik i made negative in liklihood function
+	print(-LogLik)
+	return LogLik
+
+def IRTDE_fxdR_ALL_Err2(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb):
+	print "EVAL", p
+
+	pIR = [p[0], p[1], p[2], p[3], p[4], p[5]]
+	pVb = [p[6], p[7], p[8], p[9]]
+
+	nn = 2.*len(t) + len(tVb)
+	
+	chiW1 = 0.5*( y1 - np.minimum(IRLC_fxdR_ML_point(pIR, t, argW1, RHStable, Ttable, RHS_mx, RHS_mn), 12.9)  )/ np.sqrt( dy1*dy1 + p[5]*p[5]  )
+
+	chiW2 = 0.5*( y2 - np.minimum(IRLC_fxdR_ML_point(pIR, t, argW2, RHStable, Ttable, RHS_mx, RHS_mn), 11.26) )/ np.sqrt( dy2*dy2 + p[5]*p[5]  )
+
+	chiVb = 0.5*(yVb - np.minimum(VLC_point(pVb, tVb, argVb, 1.0),17.6) )/  np.sqrt( dyVb*dyVb + p[5]*p[5]  )
+
+
+
+
+	chi2 = sum(chiW1*chiW1) + sum(chiW2*chiW2) + sum(chiVb*chiVb)
+
+	penlty = 0.5 * ( sum( np.log(dy1*dy1 + p[5]*p[5]) ) + sum( np.log(dy2*dy2 + p[5]*p[5]) ) + sum( np.log(dyVb*dyVb + p[5]*p[5]) )  )
+
+	LogLik = chi2/2. + nn/2. * np.log(2.*ma.pi) + penlty
+
+
+	##LogLik i made negative in liklihood function
+	print(-LogLik)
+	return LogLik
+
+
+
+##likliehoods (- Err2 Funcs)
+def ln_IR_ALL_likelihood(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb):
+	return -(IRTDE_ALL_Err2(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb))
+		
+
+def ln_IR_fxdR_ALL_likelihood(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb):
+	return -(IRTDE_fxdR_ALL_Err2(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb))
+		
+
+
+
+
+
+##POSTERIORS
+def ln_IR_ALL_posterior(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb):
+	pIR = [p[0], p[1], p[2], p[3], p[4], p[5]]
+	pVb = [p[6], p[7], p[8], p[9]]
+	ln_p = ln_IR_ML_prior(pIR) + ln_V_prior(pVb)
+	if not np.isfinite(ln_p):
+		return -np.inf
+	
+	ln_l = ln_IR_ALL_likelihood(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb)
+	return ln_l + ln_p
+
+def ln_IR_fxdR_ALL_posterior(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb):
+	pIR = [p[0], p[1], p[2], p[3], p[4], p[5]]
+	pVb = [p[6], p[7], p[8], p[9]]
+	ln_p = ln_IR_ML_prior(pIR) + ln_V_prior(pVb)
+	if not np.isfinite(ln_p):
+		return -np.inf
+	
+	ln_l = ln_IR_fxdR_ALL_likelihood(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb)
+	return ln_l + ln_p
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
