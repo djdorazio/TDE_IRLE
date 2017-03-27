@@ -121,7 +121,27 @@ def ln_IR_fxdR_ALL_posterior(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, R
 
 
 
+#Fmin
+def IRTDE_fxdR_FitAll_Err2_fmin(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb):
+	pIR = [p[0], p[1], p[2], p[3], p[4], p[5]]
+	pVb = [p[6], p[7], p[8], p[9]]
+	ln_p = ln_IR_ML_prior(pIR) + ln_V_prior(pVb)
+	if not np.isfinite(ln_p):
+		return np.inf
+	
+	ln_l = IRTDE_fxdR_ALL_Err2(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb)
+	return ln_l + ln_p
 
+
+def IRTDE_sblR_FitAll_Err2_fmin(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb):
+	pIR = [p[0], p[1], p[2], p[3], p[4], p[5]]
+	pVb = [p[6], p[7], p[8], p[9]]
+	ln_p = ln_IR_ML_prior(pIR) + ln_V_prior(pVb)
+	if not np.isfinite(ln_p):
+		return np.inf
+	
+	ln_l = IRTDE_ALL_Err2(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS_mn, y1, dy1, y2, dy2, yVb, dyVb)
+	return ln_l + ln_p
 
 
 
@@ -544,7 +564,7 @@ def ln_V_prior(params):
 	if tfb < 0.0 or tfb > 5.:
 		return -np.inf
 
-	if gam < 0.1 or gam > 4.0:
+	if gam < 0.0 or gam > 4.0:
 		return -np.inf
 
 	# if FQfac <= 90.0 :
