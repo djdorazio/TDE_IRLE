@@ -12,8 +12,8 @@ matplotlib.use('Agg')
 
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
-#matplotlib.rcParams['font.family'] = 'sans-serif'
-matplotlib.rcParams['font.sans-serif'] = ['Helvetica']
+matplotlib.rcParams['font.family'] = 'sans-serif'
+#matplotlib.rcParams['font.sans-serif'] = ['Helvetica']
 matplotlib.rcParams.update({'font.size': 14})
 import matplotlib.pyplot as plt
 
@@ -36,11 +36,11 @@ plot_solns = False
 USE_RSfns = True ##If FALSE remove W1 and W2 RSR fns from plotting
 
 Fit_fmin = False
-Fit_MC = False
+Fit_MC = True
 
 Src_BF = False ## doesnt matter if Fit All (all in how set V_prior)
-Rfxd = True
-No_ReGro = False ##HAVE to change by hand right now in FLuxFn- this only changes names of files
+Rfxd = False
+No_ReGro = True ##HAVE to change by hand right now in FLuxFn- this only changes names of files
 
 
 
@@ -579,52 +579,54 @@ if (Fit_MC):
 				Shell_File = "_sublR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
 
 
-			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$\sigma^{\rm{Vbnd}}_{\rm{ML}}$"]
-
-			
-			p0  = [ 3.63219272e+00,   8.10934666e-01,   8.65639639e-01, 2.43747544e-01,   5.70042738e+00,   5.07455278e+00, 3.45666610e-02,   4.11066719e-02,   1.00817126e+00, 6.65924733e-02,   1.00789213e+00,   4.28704440e-03]
+		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$\sigma^{\rm{Vbnd}}_{\rm{ML}}$"]
+		p0  = [ 3.63219272e+00,   8.10934666e-01,   8.65639639e-01, 2.43747544e-01,   5.70042738e+00,   5.07455278e+00, 3.45666610e-02,   4.11066719e-02,   1.00817126e+00, 6.65924733e-02,   1.00789213e+00,   4.28704440e-03]
 
 
-			##TABULATE T's and RHSs
-			print "Creating look up tables"
-			nu0 = numicron*p0[3]
-			nne = p0[4]
-			NT = NTdust
-			RHS_table = np.zeros(NT)
-			TT_table = np.linspace(1., 1800., NT)
-			for i in range(NT):
-			#	RHS_table[i] = T_RHS(TT_table[i], nu0, nne)
-				RHS_table[i] = T_RHS(nus_RHS, TT_table[i], nu0, nne)
-			RHS_mx = RHS_table[len(RHS_table)-1]
-			RHS_mn = RHS_table[0]
+		##TABULATE T's and RHSs
+		print "Creating look up tables"
+		nu0 = numicron*p0[3]
+		nne = p0[4]
+		NT = NTdust
+		RHS_table = np.zeros(NT)
+		TT_table = np.linspace(1., 1800., NT)
+		for i in range(NT):
+		#	RHS_table[i] = T_RHS(TT_table[i], nu0, nne)
+			RHS_table[i] = T_RHS(nus_RHS, TT_table[i], nu0, nne)
+		RHS_mx = RHS_table[len(RHS_table)-1]
+		RHS_mn = RHS_table[0]
 
 
-			###MAKE TDUST INTERP
-			print "Making Tdust interp"
-			#temp rename
+		###MAKE TDUST INTERP
+		print "Making Tdust interp"
+		#temp rename
 
-			Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+		Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
 
-			plt.figure()
-			plt.scatter(RHS_table, Td_intrp(RHS_table))
-			plt.savefig('T_Interp.png')
+		plt.figure()
+		plt.scatter(RHS_table, Td_intrp(RHS_table))
+		plt.savefig('T_Interp.png')
 
-			plt.figure()
-			plt.scatter(TT_table, RHS_table)
-			plt.savefig('RHSTABLE.png')
+		plt.figure()
+		plt.scatter(TT_table, RHS_table)
+		plt.savefig('RHSTABLE.png')
 
 
-			ndim = len(p0)
-			nwalkers = ndim*2
+		ndim = len(p0)
+		nwalkers = ndim*8
 
-			All_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_ALL_posterior, threads=NThread, args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg))
+		All_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_ALL_posterior, threads=NThread, args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg))
+
+
+
+
 
 	All_p0 = np.array(p0)
 
 	All_walker_p0 = np.random.normal(All_p0, np.abs(All_p0)*1E-4, size=(nwalkers, ndim))
 
 				
-	clen = 2
+	clen = 512
 	#for ():
 	#run as iterable
 	#acor function
