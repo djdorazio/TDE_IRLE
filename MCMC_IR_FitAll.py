@@ -36,11 +36,11 @@ plot_solns = False
 USE_RSfns = True ##If FALSE remove W1 and W2 RSR fns from plotting
 
 Fit_fmin = False
-Fit_MC = True
+Fit_MC = False
 
 Src_BF = False ## doesnt matter if Fit All (all in how set V_prior)
-Rfxd = False
-No_ReGro = True ##HAVE to change by hand right now in FLuxFn- this only changes names of files
+Rfxd = True
+No_ReGro = False ##HAVE to change by hand right now in FLuxFn- this only changes names of files
 
 
 
@@ -394,7 +394,10 @@ if (Fit_fmin):
 
 
 	if (Rfxd):
-			Shell_File = "_FminML_FitALLIRandOPt_FxdR_Trap%g_" %Ntrap_nu
+			if (TrimE):
+				Shell_File = "_TrimE_FminML_FitALLIRandOPt_FxdR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+			else:
+				Shell_File = "_FminML_FitALLIRandOPt_FxdR_Trap%g_" %Ntrap_nu
 			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$\sigma^{\rm{Vbnd}}_{\rm{ML}}$"]
 		
 			
@@ -434,10 +437,17 @@ if (Fit_fmin):
 			IR_p0 = np.array(p0)
 			popt  = sc.optimize.fmin(IRTDE_fxdR_FitAll_Err2_fmin,  IR_p0, args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), full_output=1, disp=False, ftol=0.1)[0]
 	else:
-			if (No_ReGro):
-				Shell_File = "_FminML_FitALLIRandOPt_sblR_NOREGROW_Trap%g_" %Ntrap_nu
+			if (TrimE):
+				if (No_ReGro):
+					Shell_File = "_TrimeE_FminML_FitALLIRandOPt_sblR_NOREGROW_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+				else:
+					Shell_File = "_TrimeE_FminML_FitALLIRandOPt_sblR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
 			else:
-				Shell_File = "_FminML_FitALLIRandOPt_sblR_Trap%g_" %Ntrap_nu
+				if (No_ReGro):
+					Shell_File = "_FminML_FitALLIRandOPt_sblR_NOREGROW_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+				else:
+					Shell_File = "_FminML_FitALLIRandOPt_sblR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+
 			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$\sigma^{\rm{Vbnd}}_{\rm{ML}}$"]
 			
 		
@@ -512,7 +522,11 @@ if (Fit_MC):
 	import emcee
 
 	if (Rfxd):
-			Shell_File = "_FitIRandOpt_FxdR_Trap%g_MaxLik_" %Ntrap_nu
+			if (TrimE):
+				Shell_File = "_TrimE_FitIRandOpt_FxdR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+			else:
+				Shell_File = "_FitIRandOpt_FxdR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+			
 			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$\sigma^{\rm{Vbnd}}_{\rm{ML}}$"]
 			p0 = [ 9.38084792e-01,   9.18561421e-02, -1.31365501e-01,   1.31487333e-01, 2.52415700e+00,   4.49555437e+00,   1.64801865e-01,   2.19669805e-02, 7.49921946e-05,   7.63580401e-01,   1.08668587e+00,    2.29383233e-02 ]
 
@@ -553,7 +567,18 @@ if (Fit_MC):
 
 
 	else:
-			Shell_File = "_sublR_Trap%g_MaxLik_" %Ntrap_nu
+		if (TrimE):
+			if (No_ReGro):
+				Shell_File = "_TrimE_sublR_NoRegro_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+			else:
+				Shell_File = "_TrimE_sublR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+		else:
+			if (No_ReGro):
+				Shell_File = "_sublR_NoRegro_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+			else:
+				Shell_File = "_sublR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+
+
 			param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$\sigma^{\rm{Vbnd}}_{\rm{ML}}$"]
 
 			
@@ -662,7 +687,9 @@ if (Fit_MC):
 			plt.ylabel(param_names[k])
 			plt.xlabel('steps')
 			plt.tight_layout()
-		plt.savefig('emcee_data/src_'+Shell_File+'_TDE_%s_%iwalkers.png' %(param_names[k],clen))
+			
+			plt.savefig('emcee_data/src_'+Shell_File+'_TDE_%s_%iwalkers.png' %(param_names[k],clen))
+
 		plt.clf()
 
 
@@ -762,7 +789,8 @@ if (Pplot):
 		if (Rfxd):
 			Shell_File += "Rfxd_"
 
-			All_p_opt = [9.35220121e-01,   3.46767905e-01,   7.96086756e-01,   9.97171726e-08, 5.18182796e-01,   1.41984700e+00,   1.92290030e-01,   1.34571892e-02, 3.48190849e-01,   2.00052884e-01,   5.93820751e-01,   5.83430920e-05 ]
+			#All_p_opt = [9.35220121e-01,   3.46767905e-01,   7.96086756e-01,   9.97171726e-08, 5.18182796e-01,   1.41984700e+00,   1.92290030e-01,   1.34571892e-02, 3.48190849e-01,   2.00052884e-01,   5.93820751e-01,   5.83430920e-05 ]
+			All_p_opt = [7.28841671e-01,   6.62484534e-01,   8.19048508e-01,   1.05024448e-07, 8.54690827e+00,   3.01452951e+00,   1.63695778e-01,   9.50280404e-03, 1.41175127e+00,  4.08711266e-04,   3.32723164e-01,   3.10365790e-03 ]
 		else:
 			Shell_File += "Rsbl_"
 			if (No_ReGro):
@@ -1072,28 +1100,17 @@ if (Pplot):
 
 	plt.tight_layout()
 
-	if (TrimE):
-		if (Fit_MC):
-			if (Rfxd):
-				Savename = "plots/BestFits_TrimE_"+Shell_File+"TDE_Rfxd_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_clen%g_%gwalkers_nne%g.png" %(Ntrap_ph, Ntrap_nu,tfb,clen,nwalkers, nne)
-			else:
-				Savename = "plots/BestFits_TrimE_"+Shell_File+"TDE_Rsubl_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_clen%g_%gwalkers_nne%g.png" %(Ntrap_ph, Ntrap_nu,tfb,clen,nwalkers, nne)
+
+	if (Fit_MC):
+		if (Rfxd):
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rfxd_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_clen%g_%gwalkers_nne%g.png" %(Ntrap_ph, Ntrap_nu,tfb,clen,nwalkers, nne)
 		else:
-			if (Rfxd):
-				Savename = "plots/BestFits_TrimE_"+Shell_File+"TDE_Rfxd_AnalySrc_Ntrapphi%g_NTrapnu%g__tfb%g_nne%g.png" %(Ntrap_ph, Ntrap_nu, tfb, nne)
-			else:
-				Savename = "plots/BestFits_TrimE_"+Shell_File+"TDE_Rsubl_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_nne%g.png" %(Ntrap_ph, Ntrap_nu, tfb, nne)
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rsubl_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_clen%g_%gwalkers_nne%g.png" %(Ntrap_ph, Ntrap_nu,tfb,clen,nwalkers, nne)
 	else:
-		if (Fit_MC):
-			if (Rfxd):
-				Savename = "plots/BestFits"+Shell_File+"TDE_Rfxd_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_clen%g_%gwalkers_nne%g.png" %(Ntrap_ph, Ntrap_nu,tfb,clen,nwalkers, nne)
-			else:
-				Savename = "plots/BestFits"+Shell_File+"TDE_Rsubl_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_clen%g_%gwalkers_nne%g.png" %(Ntrap_ph, Ntrap_nu,tfb,clen,nwalkers, nne)
+		if (Rfxd):
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rfxd_AnalySrc_Ntrapphi%g_NTrapnu%g__tfb%g_nne%g.png" %(Ntrap_ph, Ntrap_nu, tfb, nne)
 		else:
-			if (Rfxd):
-				Savename = "plots/BestFits"+Shell_File+"TDE_Rfxd_AnalySrc_Ntrapphi%g_NTrapnu%g__tfb%g_nne%g.png" %(Ntrap_ph, Ntrap_nu, tfb, nne)
-			else:
-				Savename = "plots/BestFits"+Shell_File+"TDE_Rsubl_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_nne%g.png" %(Ntrap_ph, Ntrap_nu, tfb, nne)
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rsubl_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_nne%g.png" %(Ntrap_ph, Ntrap_nu, tfb, nne)
 	Savename = Savename.replace('.', 'p')
 	Savename = Savename.replace('ppng', '.png')
 	plt.savefig(Savename)

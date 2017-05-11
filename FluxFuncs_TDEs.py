@@ -17,7 +17,7 @@ import scipy.signal as sgn
 
 
 # ###FOR TRAP INT
-Ntrap_ph = 161
+Ntrap_ph = 181
 Ntrap_th = 81
 Ntrap_nu = 31
 N_RHS = 101
@@ -528,15 +528,15 @@ def Fnuint_UVthick_IRThin_Iso(ph, thet, nu, t, Dist, args, RHStable, Ttable, RHS
 	### allow dust to track luminosity increse and decrease
 	Lavg, tfb, n0, Rd, p, thetT, JJ, aeff, nu0, nn, FQfac, t0, etaR, gam = args
 	Loft = Fsrc_Anl(t, Rd, Lavg, tfb, t0, gam, FQfac) * 4.*ma.pi*Rd*Rd  ##Rd does not matter here! because Fsrc has (/4.*ma.pi*Rd*Rd in it)
-	#Rd = etaR * 0.5 * pc2cm *  (Loft/(10.**(46)))**(0.5)
+	Rd = etaR * 0.5 * pc2cm *  (Loft/(10.**(46)))**(0.5)
 
 	# ### allow dust to only to track luminosity increase
-	tpeak = t0 + np.exp(1./gam - 1.) * tfb
-	Lpeak = Fsrc_Anl(tpeak, Rd, Lavg, tfb, t0, gam, FQfac) * 4.*ma.pi*Rd*Rd
+	# tpeak = t0 + np.exp(1./gam - 1.) * tfb
+	# Lpeak = Fsrc_Anl(tpeak, Rd, Lavg, tfb, t0, gam, FQfac) * 4.*ma.pi*Rd*Rd
 
-	tLEQpk = 0.5 * (np.sign(tpeak-t) + 1.0)
-	tGEQpk = 0.5 * (np.sign(t-tpeak) + 1.0)
-	Rd = etaR * 0.5 * pc2cm * (   (Loft/(10.**(46)))**(0.5) * tLEQpk  +  (Lpeak/(10.**(46)))**(0.5) * tGEQpk )
+	# tLEQpk = 0.5 * (np.sign(tpeak-t) + 1.0)
+	# tGEQpk = 0.5 * (np.sign(t-tpeak) + 1.0)
+	# Rd = etaR * 0.5 * pc2cm * (   (Loft/(10.**(46)))**(0.5) * tLEQpk  +  (Lpeak/(10.**(46)))**(0.5) * tGEQpk )
 
 	
 
