@@ -36,7 +36,7 @@ plot_solns = False
 USE_RSfns = True ##If FALSE remove W1 and W2 RSR fns from plotting
 
 Fit_fmin = False
-Fit_MC = True
+Fit_MC = False
 
 Src_BF = False ## doesnt matter if Fit All (all in how set V_prior)
 Rfxd = False
@@ -489,7 +489,6 @@ if (Fit_fmin):
 
 
 
-
 	All_p_opt = popt
 
 
@@ -579,6 +578,8 @@ if (Fit_MC):
 				Shell_File = "_sublR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
 
 
+
+
 		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$\sigma^{\rm{Vbnd}}_{\rm{ML}}$"]
 		p0  = [ 3.63219272e+00,   8.10934666e-01,   8.65639639e-01, 2.43747544e-01,   5.70042738e+00,   5.07455278e+00, 3.45666610e-02,   4.11066719e-02,   1.00817126e+00, 6.65924733e-02,   1.00789213e+00,   4.28704440e-03]
 
@@ -618,7 +619,8 @@ if (Fit_MC):
 		All_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_ALL_posterior, threads=NThread, args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg))
 
 
-
+	if (Restart):
+		Shell_File =+ "_Restart_"
 
 
 	All_p0 = np.array(p0)
@@ -1105,14 +1107,14 @@ if (Pplot):
 
 	if (Fit_MC):
 		if (Rfxd):
-			Savename = "plots/BestFits"+Shell_File+"TDE_Rfxd_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_clen%g_%gwalkers_nne%g.png" %(Ntrap_ph, Ntrap_nu,tfb,clen,nwalkers, nne)
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rfxd_AnalySrc_Ntrapth%g_Ntrapphi%g_NTrapnu%g_tfb%g_clen%g_%gwalkers_nne%g.png" %(Ntrap_th, Ntrap_ph, Ntrap_nu,tfb,clen,nwalkers, nne)
 		else:
-			Savename = "plots/BestFits"+Shell_File+"TDE_Rsubl_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_clen%g_%gwalkers_nne%g.png" %(Ntrap_ph, Ntrap_nu,tfb,clen,nwalkers, nne)
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rsubl_AnalySrc_Ntrapth%g_Ntrapphi%g_NTrapnu%g_tfb%g_clen%g_%gwalkers_nne%g.png" %(Ntrap_th, Ntrap_ph, Ntrap_nu,tfb,clen,nwalkers, nne)
 	else:
 		if (Rfxd):
-			Savename = "plots/BestFits"+Shell_File+"TDE_Rfxd_AnalySrc_Ntrapphi%g_NTrapnu%g__tfb%g_nne%g.png" %(Ntrap_ph, Ntrap_nu, tfb, nne)
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rfxd_AnalySrc_Ntrapth%g_Ntrapphi%g_NTrapnu%g__tfb%g_nne%g.png" %(Ntrap_th,Ntrap_ph, Ntrap_nu, tfb, nne)
 		else:
-			Savename = "plots/BestFits"+Shell_File+"TDE_Rsubl_AnalySrc_Ntrapphi%g_NTrapnu%g_tfb%g_nne%g.png" %(Ntrap_ph, Ntrap_nu, tfb, nne)
+			Savename = "plots/BestFits"+Shell_File+"TDE_Rsubl_AnalySrc_Ntrapth%g_Ntrapphi%g_NTrapnu%g_tfb%g_nne%g.png" %(Ntrap_th,Ntrap_ph, Ntrap_nu, tfb, nne)
 	Savename = Savename.replace('.', 'p')
 	Savename = Savename.replace('ppng', '.png')
 	plt.savefig(Savename)
