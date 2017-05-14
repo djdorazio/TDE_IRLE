@@ -28,7 +28,7 @@ from emcee_Funcs_TDEs import *
 ################################
 #Trap_Int = False
 
-Rstrt = 1
+Rstrt = 2
 #RstrtFile = "Restart/Rstrt_sublR_Trap10_MaxLik__src_longerFB_chain.txt"
 
 Pplot = True
@@ -619,25 +619,26 @@ if (Fit_MC):
 		All_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_ALL_posterior, threads=NThread, args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg))
 
 
-	#Shell_File = "_Restart%i_"%Rstrt +Shell_File 
+	
 
 	if (Rstrt>0):		
-		#RstrtFN = Rstrt - 1
-		#RstrtFile = "_Restart%i_"%RstrtFN +Shell_File+"chain.txt"
+		RstrtFN = Rstrt - 1
+		RstrtFile = "Restart/Restart%i_"%RstrtFN+Shell_File+"chain.txt"
 		##define walker init from file
-		RstrtFile = "Restart/Rstrt"+Shell_File+"chain.txt"
+		#RstrtFile = "Restart/Rstrt"+Shell_File+"chain.txt"
 		print "Restarting from File "+RstrtFile 
 		in0 = np.zeros([ndim, nwalkers])
 		for i in range(0, len(param_names)):
 			in0[i] = np.array(np.genfromtxt(RstrtFile, usecols=i+1, comments='$'))
 
-		IR_walker_p0 = np.transpose(in0)
+		All_walker_p0  = np.transpose(in0)
 	else:
 		All_p0 = np.array(p0)
 		All_walker_p0 = np.random.normal(All_p0, np.abs(All_p0)*1E-4, size=(nwalkers, ndim))
 
 
-
+	Shell_File = "Restart%i_"%Rstrt +Shell_File 
+	
 	clen = 256
 	#for ():
 	#run as iterable
@@ -671,15 +672,15 @@ if (Fit_MC):
 
 
 	##record final state for restart
-	f_rstrt = open("Restart/Rstrt"+Shell_File+"chain.txt", "w")
+	f_rstrt = open("Restart/"+Shell_File+"chain.txt", "w")
 	f_rstrt.close()
 
 	for result in All_sampler.sample(All_pos, iterations=1, storechain=False):
 	    position = result[0]
-	    f_rstrt = open("Restart/Rstrt"+Shell_File+"chain.txt", "a")
+	    f_rstrt = open("Restart/"+Shell_File+"chain.txt", "a")
 	    for k in range(position.shape[0]):
 	    	#print k
-	    	f_rstrt.write("%i  %g %g %g %g" %(k, position[k][0], position[k][1], position[k][2], position[k][3]))
+	    	f_rstrt.write("%i  %g %g %g %g %g %g %g %g %g %g %g %g" %(k, position[k][0], position[k][1], position[k][2], position[k][3], position[k][4], position[k][5], position[k][6], position[k][7], position[k][8], position[k][9], position[k][10], position[k][11]))
 	    	f_rstrt.write("\n")
 	        #f_rstrt.write("{0:4d} {1:s}\n".format(k, " ".join(position[k])))
 	    f_rstrt.close()
@@ -702,7 +703,7 @@ if (Fit_MC):
 			plt.xlabel('steps')
 			plt.tight_layout()
 			
-			plt.savefig('emcee_data/src_'+Shell_File+'_TDE_%s_%iwalkers.png' %(param_names[k],clen))
+			plt.savefig('emcee_data/'+Shell_File+'_TDE_%s_%iwalkers.png' %(param_names[k],clen))
 
 		plt.clf()
 
@@ -720,7 +721,7 @@ if (Fit_MC):
 	#import triangle
 	import corner as triangle
 	All_fig = triangle.corner(All_flatchain,  labels=param_names, quantiles=[0.15, 0.5, 0.85],show_titles=True, title_kwargs={"fontsize": 14},label_kwargs={"fontsize": 18})			
-	All_fig.savefig('emcee_data/src_'+Shell_File+'_TDE_Corner_Plot_%iwalkers.png' %clen)
+	All_fig.savefig('emcee_data/'+Shell_File+'_TDE_Corner_Plot_%iwalkers.png' %clen)
 
 
 
