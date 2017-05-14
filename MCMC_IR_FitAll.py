@@ -28,7 +28,7 @@ from emcee_Funcs_TDEs import *
 ################################
 #Trap_Int = False
 
-Rstrt = False
+Rstrt = 1
 #RstrtFile = "Restart/Rstrt_sublR_Trap10_MaxLik__src_longerFB_chain.txt"
 
 Pplot = True
@@ -36,7 +36,7 @@ plot_solns = False
 USE_RSfns = True ##If FALSE remove W1 and W2 RSR fns from plotting
 
 Fit_fmin = False
-Fit_MC = False
+Fit_MC = True
 
 Src_BF = False ## doesnt matter if Fit All (all in how set V_prior)
 Rfxd = False
@@ -614,21 +614,31 @@ if (Fit_MC):
 
 
 		ndim = len(p0)
-		nwalkers = ndim*8
+		nwalkers = ndim*6
 
 		All_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_ALL_posterior, threads=NThread, args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg))
 
 
-	if (Restart):
-		Shell_File =+ "_Restart_"
+	#Shell_File = "_Restart%i_"%Rstrt +Shell_File 
+
+	if (Rstrt>0):		
+		#RstrtFN = Rstrt - 1
+		#RstrtFile = "_Restart%i_"%RstrtFN +Shell_File+"chain.txt"
+		##define walker init from file
+		RstrtFile = "Restart/Rstrt"+Shell_File+"chain.txt"
+		print "Restarting from File "+RstrtFile 
+		in0 = np.zeros([ndim, nwalkers])
+		for i in range(0, len(param_names)):
+			in0[i] = np.array(np.genfromtxt(RstrtFile, usecols=i+1, comments='$'))
+
+		IR_walker_p0 = np.transpose(in0)
+	else:
+		All_p0 = np.array(p0)
+		All_walker_p0 = np.random.normal(All_p0, np.abs(All_p0)*1E-4, size=(nwalkers, ndim))
 
 
-	All_p0 = np.array(p0)
 
-	All_walker_p0 = np.random.normal(All_p0, np.abs(All_p0)*1E-4, size=(nwalkers, ndim))
-
-				
-	clen = 512
+	clen = 256
 	#for ():
 	#run as iterable
 	#acor function
