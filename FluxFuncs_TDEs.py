@@ -17,9 +17,9 @@ import scipy.signal as sgn
 
 
 # ###FOR TRAP INT
-Ntrap_ph = 181
-Ntrap_th = 81
-Ntrap_nu = 31
+Ntrap_ph = 181#181
+Ntrap_th = 81#81
+Ntrap_nu = 31#31
 N_RHS = 101
 
 #### INTEGRATION ERROR TOLS
@@ -345,7 +345,8 @@ def TDust(t,r,thet, ph, args, RHStable, Td_interp, RHS_mx, RHS_mn):
 	#then unravel with correct shape
 	##
 	# Make 1D interp -> Tdust(RHS) -> Tdust (Fsrc gives answer)
-	if ( JJ > (np.pi/2. - thetT) or JJ < -(np.pi/2. - thetT) ):
+	if ( JJ > (np.pi/2. - thetT) or JJ < -(np.pi/2. - thetT)):
+		Fsrc_Td = np.minimum(np.maximum(Fsrc, RHS_mn), RHS_mx)
 		Td = Td_interp(Fsrc)  #Td_Interp(Fsrc)
 		# for i in range( np.shape(Fsrc)[0]-1 ):
 		# 	for j in range( np.shape(Fsrc)[1]-1 ):

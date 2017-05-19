@@ -645,6 +645,8 @@ if (Fit_MC):
 	#acor function
 	All_pos,_,_ = All_sampler.run_mcmc(All_walker_p0, clen)
 	#manipulte (replace) fidn outliers 2std form median in beginning
+	print "emcee DONE RUNNING"
+
 
 
 	print "SAVING THE PICKLE mmmmm"
@@ -656,6 +658,7 @@ if (Fit_MC):
 
 
 	### OPEN OUTPUT DATA
+	print "ANALYSING MCMC (!)..."
 	with open("emcee_data/Pickles/TDE_All_%iwalkers.pickle" %clen) as f1:
 		All_chain,All_lnprobs = pickle.load(f1)
 
@@ -672,6 +675,7 @@ if (Fit_MC):
 
 
 	##record final state for restart
+	print  "WRITING RESTART FILE"
 	f_rstrt = open("Restart/"+Shell_File+"chain.txt", "w")
 	f_rstrt.close()
 
@@ -687,13 +691,10 @@ if (Fit_MC):
 
 
 
-	print "ANALYSING MCMC (!)..."
-	with open("emcee_data/Pickles/TDE_All_%iwalkers.pickle" %clen) as f1:
-		All_chain,All_lnprobs = pickle.load(f1)
-
 
 
 	##PLOT dem WALKERS
+	print  "PLOT dem WALKERS"
 	for k in range(All_chain.shape[2]):
 		plt.figure()
 		#plt.figure()
@@ -719,6 +720,7 @@ if (Fit_MC):
 			
 
 	#import triangle
+	print  "PLOT dat CORNER"
 	import corner as triangle
 	All_fig = triangle.corner(All_flatchain,  labels=param_names, quantiles=[0.15, 0.5, 0.85],show_titles=True, title_kwargs={"fontsize": 14},label_kwargs={"fontsize": 18})			
 	All_fig.savefig('emcee_data/'+Shell_File+'_TDE_Corner_Plot_%iwalkers.png' %clen)
@@ -737,7 +739,7 @@ if (Fit_MC):
 
 
 
-
+	print "PRINTING RESULTS TO FILE"
 	filename = "emcee_Results/TDE_results"+Shell_File+"%iwalkers.txt" %clen
 	print "Printing Results"
 	target = open(filename, 'w')
@@ -788,11 +790,23 @@ if (Fit_MC):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 if (Pplot):
 	### PLOT POINTS
 	print "PLOTTING"
-	Nt=100
-	tt = np.linspace(0.00, 15.,       Nt)*yr2sec
+	Nt=120
+	tt = np.linspace(0.00, 50.,       Nt)*yr2sec
 
 
 
@@ -1107,7 +1121,7 @@ if (Pplot):
 	plt.grid(b=True, which='both')
 	#plt.legend( [ s1[0], IR1[0], IR2[0], IR3[0]  ], (r'$F^{\rm{src}}_{\rm{iso}}$', r'$R_d = R_0$',   r'$R_d = 0.8R_0$',   r'$R_d = 1.\bar{33}R_0$'), loc='upper right', fontsize=18)
 
-	plt.xlabel(r"$t/t_{\rm{fb}}$")
+	plt.xlabel(r"$t [day]$")
 	plt.ylabel("mag")
 	#plt.xlim(tt[0]* Ombn/(2.*ma.pi), tt[len(tt)-1] * Ombn/(2.*ma.pi))
 
