@@ -347,7 +347,7 @@ def TDust(t,r,thet, ph, args, RHStable, Td_interp, RHS_mx, RHS_mn):
 	# Make 1D interp -> Tdust(RHS) -> Tdust (Fsrc gives answer)
 	if ( JJ > (np.pi/2. - thetT) or JJ < -(np.pi/2. - thetT)):
 		Fsrc_Td = np.minimum(np.maximum(Fsrc, RHS_mn), RHS_mx)
-		Td = Td_interp(Fsrc)  #Td_Interp(Fsrc)
+		Td = Td_interp(Fsrc_Td)  #Td_Interp(Fsrc)
 		# for i in range( np.shape(Fsrc)[0]-1 ):
 		# 	for j in range( np.shape(Fsrc)[1]-1 ):
 		# 		for k in range( np.shape(Fsrc)[2]-1 ):					

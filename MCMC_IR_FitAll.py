@@ -650,7 +650,7 @@ if (Fit_MC):
 
 
 	print "SAVING THE PICKLE mmmmm"
-	with open("emcee_data/Pickles/TDE_All_%iwalkers.pickle" %clen, "w") as f1:
+	with open("emcee_data/Pickles/TDE"+Shell_File+"All_%iwalkers.pickle" %clen, "w") as f1:
 		pickle.dump((All_sampler.chain, All_sampler.lnprobability), f1)
 
 
@@ -659,7 +659,7 @@ if (Fit_MC):
 
 	### OPEN OUTPUT DATA
 	print "ANALYSING MCMC (!)..."
-	with open("emcee_data/Pickles/TDE_All_%iwalkers.pickle" %clen) as f1:
+	with open("emcee_data/Pickles/TDE"+Shell_File+"All_%iwalkers.pickle" %clen) as f1:
 		All_chain,All_lnprobs = pickle.load(f1)
 
 
