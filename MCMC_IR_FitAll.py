@@ -665,9 +665,9 @@ if (Fit_MC):
 
 
 	#V_acor = V_sampler.acor
-
-	All_flatchain = np.vstack(All_chain[:,clen/4:])
-	All_flatlnprobs = np.vstack(All_lnprobs[:,clen/4:])
+   # All_flatchain = np.vstack(All_chain[:,clen/4:])
+	All_flatchain = np.vstack(All_chain[:,clen*7/8:])
+	All_flatlnprobs = np.vstack(All_lnprobs[:,clen*7/8:])
 			
 
 	All_p_opt = All_flatchain[All_flatlnprobs.argmax()]		
@@ -712,8 +712,8 @@ if (Fit_MC):
 
 
 	###CORNER PLOT	
-	All_flatchain = np.vstack(All_chain[:,clen/4:])
-	All_flatlnprobs = np.vstack(All_lnprobs[:,clen/4:])
+	All_flatchain = np.vstack(All_chain[:,clen*7/8:])
+	All_flatlnprobs = np.vstack(All_lnprobs[:,clen*7/8:])
 
 
 
@@ -805,8 +805,8 @@ if (Fit_MC):
 if (Pplot):
 	### PLOT POINTS
 	print "PLOTTING"
-	Nt=120
-	tt = np.linspace(0.00, 50.,       Nt)*yr2sec
+	Nt=60
+	tt = np.linspace(0.00, 20.,       Nt)*yr2sec
 
 
 

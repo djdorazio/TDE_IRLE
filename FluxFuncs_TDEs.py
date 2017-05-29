@@ -17,9 +17,9 @@ import scipy.signal as sgn
 
 
 # ###FOR TRAP INT
-Ntrap_ph = 181#181
-Ntrap_th = 81#81
-Ntrap_nu = 31#31
+Ntrap_ph = 181
+Ntrap_th = 81
+Ntrap_nu = 31
 N_RHS = 101
 
 #### INTEGRATION ERROR TOLS
