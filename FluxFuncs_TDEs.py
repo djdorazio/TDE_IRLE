@@ -17,10 +17,17 @@ import scipy.signal as sgn
 
 
 # ###FOR TRAP INT
-Ntrap_ph = 181
-Ntrap_th = 81
+#Run vals
+Ntrap_ph = 61#181
+Ntrap_th = 31 #41
 Ntrap_nu = 31
 N_RHS = 101
+
+#Testing
+# Ntrap_ph = 11#181
+# Ntrap_th = 11
+# Ntrap_nu = 11
+# N_RHS = 41
 
 #### INTEGRATION ERROR TOLS
 myrel = 1.e-8

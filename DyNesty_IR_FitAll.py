@@ -19,7 +19,12 @@ import matplotlib.pyplot as plt
 
 
 from FluxFuncs_TDEs import *
-from emcee_Funcs_TDEs import *
+
+
+## parellel for dynesty
+# from multiprocessing import Pool
+# ppool = Pool(processes=1)
+# procs = 1
 
 ################################
 ###############################
@@ -31,12 +36,13 @@ from emcee_Funcs_TDEs import *
 Rstrt = 0
 #RstrtFile = "Restart/Rstrt_sublR_Trap10_MaxLik__src_longerFB_chain.txt"
 
-Pplot = True
+Pplot = False
 plot_solns = False
 USE_RSfns = True ##If FALSE remove W1 and W2 RSR fns from plotting
 
 Fit_fmin = False
 Fit_MC = False
+Fit_Nest = True
 
 Src_BF = False ## doesnt matter if Fit All (all in how set V_prior)
 Rfxd = False
@@ -191,19 +197,7 @@ W2_avsg = np.array(W2_avsg)
 
 
 
-####TEMP: FORCE QUESCIENT POINTS TO HAVE SMALL ERRORS!
-# W1_avsg[0] *= 0.1
-# W1_avsg[1] *= 0.1
-# W2_avsg[0] *= 0.1
-# W2_avsg[1] *= 0.1
 
-# W1_avsg[8] *= 5.0
-# W1_avsg[7] *= 5.0
-# W1_avsg[6] *= 2.0
-
-# W2_avsg[8] *= 8.0
-# W2_avsg[7] *= 5.0
-# W2_avsg[6] *= 3.0
 
 
 
@@ -389,6 +383,7 @@ plt.savefig('RHSTABLE.png')
 
 
 if (Fit_fmin):
+	from emcee_Funcs_TDEs import *
 	from scipy import optimize
 	from scipy.optimize import fmin
 
@@ -518,6 +513,7 @@ if (Fit_fmin):
 
 
 if (Fit_MC):
+	from emcee_Funcs_TDEs import *
 	import emcee
 
 	if (Rfxd):
@@ -782,6 +778,196 @@ if (Fit_MC):
 
 
 
+if (Fit_Nest):
+	from dynesty_Funcs_TDEs import *
+	from scipy.stats import truncnorm
+
+	# seed the random number generator
+	np.random.seed(2)
+
+	import dynesty
+
+	###setup params
+	if (Rfxd):
+			if (TrimE):
+				Shell_File = "_Dynesty_TrimE_FitIRandOpt_FxdR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+			else:
+				Shell_File = "_Dynesty__FitIRandOpt_FxdR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+			
+			#param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$\sigma^{\rm{Vbnd}}_{\rm{ML}}$"]
+			#p0 = [ 9.38084792e-01,   9.18561421e-02, -1.31365501e-01,   1.31487333e-01, 2.52415700e+00,   4.49555437e+00,   1.64801865e-01,   2.19669805e-02, 7.49921946e-05,   7.63580401e-01,   1.08668587e+00,    2.29383233e-02 ]
+			param_names = [r"$R_d$ [pc]",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$c^{-1} \mu\rm{m}\nu_0$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$"]
+			p0 = [ 9.38084792e-01,   9.18561421e-02, -1.31365501e-01,   1.31487333e-01, 2.52415700e+00,   4.49555437e+00,   1.64801865e-01,   2.19669805e-02, 7.49921946e-05,   7.63580401e-01,   1.08668587e+00]
+
+
+						##TABULATE T's and RHSs
+			print "Creating look up tables"
+			nu0 = numicron*p0[3]
+			nne = p0[4]
+			NT = NTdust
+			RHS_table = np.zeros(NT)
+			TT_table = np.linspace(1., 1800., NT)
+			for i in range(NT):
+			#	RHS_table[i] = T_RHS(TT_table[i], nu0, nne)
+				RHS_table[i] = T_RHS(nus_RHS, TT_table[i], nu0, nne)
+			RHS_mx = RHS_table[len(RHS_table)-1]
+			RHS_mn = RHS_table[0]
+
+
+			###MAKE TDUST INTERP
+			print "Making Tdust interp"
+			#temp rename
+
+			Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+
+			plt.figure()
+			plt.scatter(RHS_table, Td_intrp(RHS_table))
+			plt.savefig('T_Interp.png')
+
+			plt.figure()
+			plt.scatter(TT_table, RHS_table)
+			plt.savefig('RHSTABLE.png')
+
+			
+			ndim = len(p0)
+			nwalkers = ndim*4
+																											
+			# All_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_fxdR_ALL_posterior, threads=NThread, args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg))
+			
+			# initialize dynamic nested sampler
+			dsampler = dynesty.DynamicNestedSampler(ln_IR_fxdR_ALL_posterior_dyn, ptform, ndim, logl_args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), sample='rwalk', bound='multi', update_interval=6.*ndim, walks=50)#, queue_size=procs, pool=ppool)
+
+
+
+	else:
+		if (TrimE):
+			if (No_ReGro):
+				Shell_File = "_Dynesty__TrimE_sublR_NoRegro_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+			else:
+				Shell_File = "_Dynesty__TrimE_sublR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+		else:
+			if (No_ReGro):
+				Shell_File = "_Dynesty__sublR_NoRegro_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+			else:
+				Shell_File = "_Dynesty__sublR_NTrapnu%g_NTrapph%g_NTrapth%g_" %(Ntrap_nu, Ntrap_ph, Ntrap_th)
+
+
+
+
+		#param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$", r"$\sigma^{\rm{Vbnd}}_{\rm{ML}}$"]
+		#p0  = [ 3.63219272e+00,   8.10934666e-01,   8.65639639e-01, 2.43747544e-01,   5.70042738e+00,   5.07455278e+00, 3.45666610e-02,   4.11066719e-02,   1.00817126e+00, 6.65924733e-02,   1.00789213e+00,   4.28704440e-03]
+		param_names = [r"$\eta_R$",r"$\cos{\theta_T}$",r"$\sin(J)$", r"$\mu\rm{m}\nu_0c^{-1}$", "k", r"$L_{45}$", r"$\sigma_{\rm{ML}}$", r"$L^{V}_0$",r"$t_0$",r"$t_{fb}$", r"$\gamma$"]
+		p0  = [ 3.63219272e+00,   8.10934666e-01,   8.65639639e-01, 2.43747544e-01,   5.70042738e+00,   5.07455278e+00, 3.45666610e-02,   4.11066719e-02,   1.00817126e+00, 6.65924733e-02,   1.00789213e+00]
+
+
+		##TABULATE T's and RHSs
+		print "Creating look up tables"
+		nu0 = numicron*p0[3]
+		nne = p0[4]
+		NT = NTdust
+		RHS_table = np.zeros(NT)
+		TT_table = np.linspace(1., 1800., NT)
+		for i in range(NT):
+		#	RHS_table[i] = T_RHS(TT_table[i], nu0, nne)
+			RHS_table[i] = T_RHS(nus_RHS, TT_table[i], nu0, nne)
+		RHS_mx = RHS_table[len(RHS_table)-1]
+		RHS_mn = RHS_table[0]
+
+
+		###MAKE TDUST INTERP
+		print "Making Tdust interp"
+		#temp rename
+
+		Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+
+		plt.figure()
+		plt.scatter(RHS_table, Td_intrp(RHS_table))
+		plt.savefig('T_Interp.png')
+
+		plt.figure()
+		plt.scatter(TT_table, RHS_table)
+		plt.savefig('RHSTABLE.png')
+
+
+		ndim = len(p0)
+		nwalkers = ndim*6
+
+
+
+		# initialize dynamic nested sampler
+		print "dsamp init"
+		dsampler = dynesty.DynamicNestedSampler(ln_IR_ALL_posterior_dyn, ptform, ndim,  logl_args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), sample='rwalk', bound='multi', update_interval=6.*ndim, walks=50)#, queue_size=procs, pool=ppool)
+
+	# run with 120 initial live points until dlogz=0.01
+	# add 100 live points at a time
+	# use default weight function with 100% posterior weight
+	# use automated stopping criteria (100% posterior weight)
+	print "Running dsampler"
+	dsampler.run_nested(nlive_init=10*ndim, nlive_batch=100, dlogz_init=0.1, wt_kwargs={'pfrac': 1.0})
+
+
+##ANALYSIS
+	print "Analysing Dynesty Results"
+	dres = dsampler.results  # store results
+	with open("LSQ12dlf_dynesty.pkl", "wb") as out:
+		pickle.dump(dres, out)
+
+	    
+	# diagnostic summary plot
+	from dynesty import plotting as dyplot
+
+	print "Summary Plot"
+	fig, ax = dyplot.runplot(dres, logplot=True)
+	fig.tight_layout()
+	fig.savefig("dyntest_sumry.png")
+
+
+	# trace plot
+	print "Trace Plot"
+	fig1, ax1 = dyplot.traceplot(dres, labels=param_names, show_titles=True)
+	fig1.tight_layout()
+	fig1.savefig("dyntest_trace.png")
+
+
+
+	print "Corner Plot"
+	fig2, ax2 = dyplot.cornerplot(dres, show_titles=True, labels=param_names)
+	fig2.savefig("dyntest_corner.png")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -804,10 +990,11 @@ if (Fit_MC):
 
 
 if (Pplot):
+	from dynesty_Funcs_TDEs import *
 	### PLOT POINTS
 	print "PLOTTING"
-	Nt=60
-	tt = np.linspace(0.00, 20.,       Nt)*yr2sec
+	Nt=200
+	tt = np.linspace(0.00, 15.,       Nt)*yr2sec
 
 
 
@@ -820,7 +1007,10 @@ if (Pplot):
 			Shell_File += "Rfxd_"
 
 			#All_p_opt = [9.35220121e-01,   3.46767905e-01,   7.96086756e-01,   9.97171726e-08, 5.18182796e-01,   1.41984700e+00,   1.92290030e-01,   1.34571892e-02, 3.48190849e-01,   2.00052884e-01,   5.93820751e-01,   5.83430920e-05 ]
-			All_p_opt = [7.28841671e-01,   6.62484534e-01,   8.19048508e-01,   1.05024448e-07, 8.54690827e+00,   3.01452951e+00,   1.63695778e-01,   9.50280404e-03, 1.41175127e+00,  4.08711266e-04,   3.32723164e-01,   3.10365790e-03 ]
+			#All_p_opt = [7.28841671e-01,   6.62484534e-01,   8.19048508e-01,   1.05024448e-07, 8.54690827e+00,   3.01452951e+00,   1.63695778e-01,   9.50280404e-03, 1.41175127e+00,  4.08711266e-04,   3.32723164e-01,   3.10365790e-03 ]
+
+			### DYNESTY OUTPUT for NoRegrow, Rfix = false, Trim=True
+			All_p_opt = [12.33,   0.39,   0.76,   0.01, 5.90,   1.25,   0.06,   0.01, 0.60,  3.03,   0.08,   0.20 ]
 		else:
 			Shell_File += "Rsbl_"
 			if (No_ReGro):
@@ -834,7 +1024,13 @@ if (Pplot):
 				All_p_opt  = [1.53069822e+00,   6.66538508e-01,   9.23748358e-01,   6.36056796e-02, 1.23992169e-01,   6.09638524e+00,   2.53046481e-01,   6.41176692e-02, 7.97110106e-01,   8.10336449e-02,   1.07679385e+00,   3.65140372e-03 ]
 
 	## not fixed R, NoREgrow, MCMC best fit for TrimE
-	All_p_opt  =[ 4.77589089,  0.85436462,  0.86116253,  0.23955337,  7.60425767, 1.83650851,  0.03721246,  0.03448687,  0.64344651,  0.0301423 , 0.63908395,  0.01995151]
+	#All_p_opt  =[ 4.77589089,  0.85436462,  0.86116253,  0.23955337,  7.60425767, 1.83650851,  0.03721246,  0.03448687,  0.64344651,  0.0301423 , 0.63908395,  0.01995151]
+				
+
+	### DYNESTY OUTPUT for NoRegrow, Rfix = false, Trim=True
+	All_p_opt = [1.33,   0.39,   0.76,   0.01, 5.90,   1.25,   0.06,   0.01, 0.60,  3.03,   0.08,   0.20 ]
+
+
 
 	##TABULATE T's and RHSs
 	print "Creating look up tables"
