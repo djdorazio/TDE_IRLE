@@ -3,6 +3,7 @@ import numpy as np
 from numpy import *
 import scipy as sc
 from scipy import *
+from dynesty_Funcs_TDEs import *
 
 
 #from emcee.utils import MPIPool
@@ -22,9 +23,9 @@ from FluxFuncs_TDEs import *
 
 
 ## parellel for dynesty
-# from multiprocessing import Pool
-# ppool = Pool(processes=1)
-# procs = 1
+from multiprocessing import Pool
+pool = Pool(processes=8)
+procs = 8
 
 # from multiprocessing import MPIPool
 # import sys
@@ -44,13 +45,14 @@ from FluxFuncs_TDEs import *
 Rstrt = 0
 #RstrtFile = "Restart/Rstrt_sublR_Trap10_MaxLik__src_longerFB_chain.txt"
 
-Pplot = False
-plot_solns = False
+Pplot = True
+plot_solns = True
 USE_RSfns = True ##If FALSE remove W1 and W2 RSR fns from plotting
 
 Fit_fmin = False
 Fit_MC = False
 Fit_Nest = True
+Load_Nest = False
 
 Src_BF = False ## doesnt matter if Fit All (all in how set V_prior)
 Rfxd = False
@@ -274,8 +276,8 @@ W1_RSR = np.genfromtxt("dat/BandW1.txt",usecols=1, comments="#")
 nu2_RSR = c/(np.genfromtxt("dat/BandW2.txt",usecols=0, comments="#")*10.**(-8))
 W2_RSR = np.genfromtxt("dat/BandW2.txt",usecols=1, comments="#")
 
-W1RSR_intrp = sc.interpolate.interp1d(nu1_RSR, W1_RSR)
-W2RSR_intrp = sc.interpolate.interp1d(nu2_RSR, W2_RSR)
+W1RSR_intrp = interp1d_picklable(nu1_RSR, W1_RSR)
+W2RSR_intrp = interp1d_picklable(nu2_RSR, W2_RSR)
 
 ###TEST Interp
 #nus1 = linspace(nu1_RSR[0], nu1_RSR[len(nu1_RSR)-1], 100)
@@ -325,7 +327,7 @@ FW2Rel = 1.71787*10**(-21)*(W2mx-W2mn)/(2.*Nnrm) * (2.0 * np.sum([W2RSR_intrp(nu
 
 
 #Temp_Num(t, r, Lavg, tfb, t0, gam, FQfac, nu0, nn)
-#Td_intrp = sc.interpolate.interp1d(tts, Temp_Num(tts, Rde, Lav, tfb, t0, gam, FQfac, nu0, nn))
+#Td_intrp = interp1d_picklable(tts, Temp_Num(tts, Rde, Lav, tfb, t0, gam, FQfac, nu0, nn))
 
 
 
@@ -377,7 +379,7 @@ RHS_mn = RHS_table[0]
 print "Making Tdust interp"
 #temp rename
 
-Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+Td_intrp = interp1d_picklable(RHS_table, TT_table,)
 
 plt.figure()
 plt.scatter(RHS_table, Td_intrp(RHS_table))
@@ -427,7 +429,7 @@ if (Fit_fmin):
 			print "Making Tdust interp"
 			#temp rename
 
-			Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+			Td_intrp = interp1d_picklable(RHS_table, TT_table,)
 
 			plt.figure()
 			plt.scatter(RHS_table, Td_intrp(RHS_table))
@@ -474,7 +476,7 @@ if (Fit_fmin):
 			print "Making Tdust interp"
 			#temp rename
 
-			Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+			Td_intrp = interp1d_picklable(RHS_table, TT_table,)
 
 			plt.figure()
 			plt.scatter(RHS_table, Td_intrp(RHS_table))
@@ -552,7 +554,7 @@ if (Fit_MC):
 			print "Making Tdust interp"
 			#temp rename
 
-			Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+			Td_intrp = interp1d_picklable(RHS_table, TT_table,)
 
 			plt.figure()
 			plt.scatter(RHS_table, Td_intrp(RHS_table))
@@ -606,7 +608,7 @@ if (Fit_MC):
 		print "Making Tdust interp"
 		#temp rename
 
-		Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+		Td_intrp = interp1d_picklable(RHS_table, TT_table,)
 
 		plt.figure()
 		plt.scatter(RHS_table, Td_intrp(RHS_table))
@@ -826,7 +828,7 @@ if (Fit_Nest):
 			print "Making Tdust interp"
 			#temp rename
 
-			Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+			Td_intrp = interp1d_picklable(RHS_table, TT_table,)
 
 			plt.figure()
 			plt.scatter(RHS_table, Td_intrp(RHS_table))
@@ -843,7 +845,7 @@ if (Fit_Nest):
 			# All_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_fxdR_ALL_posterior, threads=NThread, args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg))
 			
 			# initialize dynamic nested sampler
-			dsampler = dynesty.DynamicNestedSampler(ln_IR_fxdR_ALL_posterior_dyn, ptform, ndim, logl_args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), sample='rwalk', bound='multi', update_interval=6.*ndim, walks=50)#, queue_size=procs, pool=pool)
+			dsampler = dynesty.DynamicNestedSampler(ln_IR_fxdR_ALL_posterior_dyn, ptform, ndim, logl_args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), sample='rwalk', bound='multi', update_interval=6.*ndim, walks=50, queue_size=procs, pool=pool)
 
 
 
@@ -886,7 +888,7 @@ if (Fit_Nest):
 		print "Making Tdust interp"
 		#temp rename
 
-		Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+		Td_intrp = interp1d_picklable(RHS_table, TT_table,)
 
 		plt.figure()
 		plt.scatter(RHS_table, Td_intrp(RHS_table))
@@ -904,14 +906,14 @@ if (Fit_Nest):
 
 		# initialize dynamic nested sampler
 		print "dsamp init"
-		dsampler = dynesty.DynamicNestedSampler(ln_IR_ALL_posterior_dyn, ptform, ndim,  logl_args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), sample='rwalk', bound='multi', update_interval=6.*ndim, walks=50)#, queue_size=procs, pool=pool)
+		dsampler = dynesty.DynamicNestedSampler(ln_IR_ALL_posterior_dyn, ptform, ndim,  logl_args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), sample='rwalk', bound='multi', update_interval=6.*ndim, walks=50, queue_size=procs, pool=pool)
 
 	# run with 120 initial live points until dlogz=0.01
 	# add 100 live points at a time
 	# use default weight function with 100% posterior weight
 	# use automated stopping criteria (100% posterior weight)
 	print "Running dsampler"
-	dsampler.run_nested(nlive_init=10*ndim, nlive_batch=100, dlogz_init=0.1, wt_kwargs={'pfrac': 1.0})
+	dsampler.run_nested(nlive_init=10*ndim, nlive_batch=100, dlogz_init=0.01, wt_kwargs={'pfrac': 1.0})
 
 
 ##ANALYSIS
@@ -947,9 +949,6 @@ if (Fit_Nest):
 
 
 
-
-
-
 #pool.close()
 
 
@@ -967,7 +966,10 @@ if (Fit_Nest):
 
 
 
-
+if (Load_Nest):
+	print "Loading dat nesty pickle"
+	with open("dynesty_fits/LSQ12dlf_dynesty.pkl") as f1:
+		dres= pickle.load(f1)
 
 
 
@@ -998,7 +1000,6 @@ if (Fit_Nest):
 
 
 if (Pplot):
-	from dynesty_Funcs_TDEs import *
 	### PLOT POINTS
 	print "PLOTTING"
 	Nt=200
@@ -1031,12 +1032,46 @@ if (Pplot):
 			
 				All_p_opt  = [1.53069822e+00,   6.66538508e-01,   9.23748358e-01,   6.36056796e-02, 1.23992169e-01,   6.09638524e+00,   2.53046481e-01,   6.41176692e-02, 7.97110106e-01,   8.10336449e-02,   1.07679385e+00,   3.65140372e-03 ]
 
+
+		IR_p_opt = [All_p_opt[0], All_p_opt[1], All_p_opt[2], All_p_opt[3], All_p_opt[4], All_p_opt[5], All_p_opt[8], All_p_opt[9],  All_p_opt[10]]
+		V_p_opt = [All_p_opt[7], All_p_opt[8], All_p_opt[9], All_p_opt[10]]
+
 	## not fixed R, NoREgrow, MCMC best fit for TrimE
 	#All_p_opt  =[ 4.77589089,  0.85436462,  0.86116253,  0.23955337,  7.60425767, 1.83650851,  0.03721246,  0.03448687,  0.64344651,  0.0301423 , 0.63908395,  0.01995151]
 				
 
 	### DYNESTY OUTPUT for NoRegrow, Rfix = false, Trim=True
-	All_p_opt = [1.33,   0.39,   0.76,   0.01, 5.90,   1.25,   0.06,   0.01, 0.60,  3.03,   0.08,   0.20 ]
+	#All_p_opt = [1.33,   0.39,   0.76,   0.01, 5.90,   1.25,   0.06,   0.01, 0.60,  3.03,   0.08,   0.20 ]
+	if (Load_Nest or Fit_Nest):
+		from dynesty_Funcs_TDEs import *
+		import dynesty
+		nsol = 10
+		lnsamp = len(dres['samples'])
+		All_p_optS = dres['samples'][lnsamp-nsol:lnsamp]
+		smpsT = np.transpose(dres['samples'])
+		plen = len(dres['samples'][0])
+		All_p_optM = np.zeros(plen)
+		All_p_opt = np.zeros(plen)
+		All_p_optP = np.zeros(plen)
+		qntsin = [0.36, 0.5, 0.64]
+		wts = dres['logwt']
+		# for i in range (plen):
+		# 	qnts = dynesty.plotting._quantile(smpsT[i], qntsin, weights=wts)
+		# 	All_p_optM[i] = qnts[0]
+		# 	All_p_opt[i] = qnts[1]
+		# 	All_p_optP[i] = qnts[2]
+
+		All_p_opt = All_p_optS[nsol-1]
+
+		IR_p_opt = [All_p_opt[0], All_p_opt[1], All_p_opt[2], All_p_opt[3], All_p_opt[4], All_p_opt[5], All_p_opt[8], All_p_opt[9],  All_p_opt[10]]
+		V_p_opt = [All_p_opt[7], All_p_opt[8], All_p_opt[9], All_p_opt[10]]
+
+		IR_p_slns = np.zeros([nsol,len(IR_p_opt)])
+		V_p_slns = np.zeros([nsol,len(V_p_opt)])
+		for j in range(nsol):
+			IR_p_slns[j] = [All_p_optS[j][0], All_p_optS[j][1], All_p_optS[j][2], All_p_optS[j][3], All_p_optS[j][4], All_p_optS[j][5], All_p_optS[j][8], All_p_optS[j][9],  All_p_optS[j][10]]
+			V_p_slns[j]  = [All_p_optS[j][7], All_p_optS[j][8], All_p_optS[j][9], All_p_optS[j][10]]
+
 
 
 
@@ -1058,7 +1093,7 @@ if (Pplot):
 	print "Making Tdust interp"
 	#temp rename
 
-	Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+	Td_intrp = interp1d_picklable(RHS_table, TT_table,)
 
 	plt.figure()
 	plt.scatter(RHS_table, Td_intrp(RHS_table))
@@ -1068,8 +1103,8 @@ if (Pplot):
 	plt.scatter(TT_table, RHS_table)
 	plt.savefig('RHSTABLE.png')
 
-	IR_p_opt = [All_p_opt[0], All_p_opt[1], All_p_opt[2], All_p_opt[3], All_p_opt[4], All_p_opt[5], All_p_opt[8], All_p_opt[9],  All_p_opt[10]]
-	V_p_opt = [All_p_opt[7], All_p_opt[8], All_p_opt[9], All_p_opt[10]]
+	# IR_p_opt = [All_p_opt[0], All_p_opt[1], All_p_opt[2], All_p_opt[3], All_p_opt[4], All_p_opt[5], All_p_opt[8], All_p_opt[9],  All_p_opt[10]]
+	# V_p_opt = [All_p_opt[7], All_p_opt[8], All_p_opt[9], All_p_opt[10]]
 
 	# #if (plot_solns):
 	# IR_perr = [All_diff_plus[0], All_diff_plus[1], All_diff_plus[2], All_diff_plus[3], All_diff_plus[4], All_diff_plus[5], All_diff_plus[8], All_diff_plus[9], All_diff_plus[10]]
@@ -1184,6 +1219,24 @@ if (Pplot):
 
 
 
+		## Plot all allowed solutions
+
+	if (plot_solns):
+		FI1_slns = np.zeros([nsol, Nt])
+		FI2_slns = np.zeros([nsol, Nt])
+		Fsrc_slns = np.zeros([nsol, Nt])
+		for j in range(nsol):
+			print "plotting soln %g of %g" %(j+1, nsol)
+			for i in range(Nt):
+				if (Rfxd):
+					FI1_slns[j][i] = IRLC_W1_fxdR_ML_point(IR_p_slns[j], tt[i], argW1, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, phis, ths, nuW1)
+					FI2_slns[j][i] = IRLC_W2_fxdR_ML_point(IR_p_slns[j], tt[i], argW2, RHS_table, Td_intrp, RHS_mx, RHS_mn, W2RSR_intrp, phis, ths, nuW2)
+
+				else:
+					FI1_slns[j][i] = IRLC_W1_ML_point(IR_p_slns[j], tt[i], argW1, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, phis, ths, nuW1)
+					FI2_slns[j][i] = IRLC_W2_ML_point(IR_p_slns[j], tt[i], argW2, RHS_table, Td_intrp, RHS_mx, RHS_mn, W2RSR_intrp, phis, ths, nuW2)
+
+			Fsrc_slns[j] = VLC_point(V_p_slns[j], tt, Varg, 1.0)
 
 
 
@@ -1291,7 +1344,7 @@ if (Pplot):
 	IR2 = plt.plot(tt/yr2sec*365., FI2, color='red', linewidth=3)#color='#d95f02', linewidth=3)
 
 	if (plot_solns):
-		for i in range(Nsolns):
+		for i in range(nsol):
 			plt.plot(tt/yr2sec*365., FI1_slns[i], color='orange', linewidth=2, alpha=0.5)#color='#1b9e77', linewidth=3)
 			plt.plot(tt/yr2sec*365., FI2_slns[i], color='red', linewidth=2, alpha=0.5)#color='#d95f02', linewidth=3)
 

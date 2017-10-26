@@ -1,11 +1,30 @@
 import numpy as np
 from numpy import *
 from FluxFuncs_TDEs import *
+from scipy.interpolate import interp1d
 
 
 
+##
+#misc pickles
 
+class interp1d_picklable:
+    """ class wrapper for piecewise linear function
+    """
+    def __init__(self, xi, yi, **kwargs):
+        self.xi = xi
+        self.yi = yi
+        self.args = kwargs
+        self.f = interp1d(xi, yi, **kwargs)
 
+    def __call__(self, xnew):
+        return self.f(xnew)
+
+    def __getstate__(self):
+        return self.xi, self.yi, self.args
+
+    def __setstate__(self, state):
+        self.f = interp1d(state[0], state[1], **state[2])
 
 
 ############################
@@ -86,7 +105,7 @@ def IRTDE_ALL_Err2(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx, RHS
 
 	###MAKE TDUST INTERP
 	#print "Making Tdust interp"
-	Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+	Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table)
 
 
 
@@ -157,7 +176,7 @@ def IRTDE_fxdR_ALL_Err2(p, t, tVb, argW1, argW2, argVb, RHStable, Ttable, RHS_mx
 
 	###MAKE TDUST INTERP
 	#print "Making Tdust interp"
-	Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table,)
+	Td_intrp = sc.interpolate.interp1d(RHS_table, TT_table)
 
 
 	pVb = [p[7], p[8], p[9], p[10]]  ##11 is sigma V band
