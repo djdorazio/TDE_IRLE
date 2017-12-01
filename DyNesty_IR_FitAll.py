@@ -22,18 +22,17 @@ import matplotlib.pyplot as plt
 from FluxFuncs_TDEs import *
 
 
-## parellel for dynesty
-# from multiprocessing import Pool
-# pool = Pool(processes=8)
-# procs = 8
-
-from multiprocessing import MPIPool
-import sys
-import numpy as np
-import emcee
-from emcee.utils import MPIPool
-pool = MPIPool()
+## parellel for dynesty OpenMP
+from multiprocessing import Pool
+pool = Pool(processes=8)
 procs = 16
+
+
+# import sys
+# import emcee
+# from emcee.utils import MPIPool
+# pool = MPIPool()
+# procs = 16
 
 ################################
 ###############################
@@ -793,7 +792,7 @@ if (Fit_Nest):
 	from scipy.stats import truncnorm
 
 	# seed the random number generator
-	np.random.seed(2)
+	np.random.seed()
 
 	import dynesty
 
@@ -845,7 +844,7 @@ if (Fit_Nest):
 			# All_sampler  = emcee.EnsembleSampler(nwalkers, ndim, ln_IR_fxdR_ALL_posterior, threads=NThread, args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg))
 			
 			# initialize dynamic nested sampler
-			dsampler = dynesty.DynamicNestedSampler(ln_IR_fxdR_ALL_posterior_dyn, ptform, ndim, logl_args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), sample='rwalk', bound='multi', update_interval=6.*ndim, walks=50, queue_size=procs, pool=pool)
+			dsampler = dynesty.DynamicNestedSampler(ln_IR_fxdR_ALL_posterior_dyn, ptform, ndim, logl_args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), sample='rwalk', bound='single', update_interval=6.*ndim, walks=50, queue_size=procs, pool=pool)
 
 
 
@@ -906,14 +905,14 @@ if (Fit_Nest):
 
 		# initialize dynamic nested sampler
 		print "dsamp init"
-		dsampler = dynesty.DynamicNestedSampler(ln_IR_ALL_posterior_dyn, ptform, ndim,  logl_args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), sample='rwalk', bound='multi', update_interval=6.*ndim, walks=50, queue_size=procs, pool=pool)
+		dsampler = dynesty.DynamicNestedSampler(ln_IR_ALL_posterior_dyn, ptform, ndim,  logl_args=(t_avg, tV_avg, argW1, argW2, Varg, RHS_table, Td_intrp, RHS_mx, RHS_mn, W1RSR_intrp, W2RSR_intrp, phis, ths, nuW1, nuW2, W1_avg, W1_avsg, W2_avg, W2_avsg, V_avg, V_avsg), sample='rwalk', bound='single', update_interval=6.*ndim, walks=50, queue_size=procs, pool=pool)
 
 	# run with 120 initial live points until dlogz=0.01
 	# add 100 live points at a time
 	# use default weight function with 100% posterior weight
 	# use automated stopping criteria (100% posterior weight)
 	print "Running dsampler"
-	dsampler.run_nested(nlive_init=10*ndim, nlive_batch=100, dlogz_init=0.01, wt_kwargs={'pfrac': 1.0})
+	dsampler.run_nested(nlive_init=12*ndim, nlive_batch=161, dlogz_init=0.01, wt_kwargs={'pfrac': 1.0})
 
 
 ##ANALYSIS

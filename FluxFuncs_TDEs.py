@@ -18,9 +18,9 @@ import scipy.signal as sgn
 
 # ###FOR TRAP INT
 #Run vals
-Ntrap_ph = 61#181
-Ntrap_th = 31 #41
-Ntrap_nu = 31
+Ntrap_ph = 181#181
+Ntrap_th = 91 #41
+Ntrap_nu = 41
 N_RHS = 101
 
 #Testing

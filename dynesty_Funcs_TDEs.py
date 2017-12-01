@@ -44,7 +44,7 @@ def ptform(params):
 
 	tfbout = 10.**( (tfb*2.0 - 1.0)*1.0)
 
-	gamout = gam*4.0
+	gamout = gam*4.0 + 0.01
 
 	etaRout = 10.**( (etaR*2.0 - 1.0)*2.0)
 
